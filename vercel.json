@@ -1,7 +1,7 @@
 {
   "framework": "vite",
-  "buildCommand": "cd naatu-shop && npm install && npm run build",
-  "outputDirectory": "naatu-shop/dist",
+  "buildCommand": "cd purple-boutique-billing && npm install && npm run build",
+  "outputDirectory": "purple-boutique-billing/dist",
   "rewrites": [
     {
       "source": "/(.*)",
