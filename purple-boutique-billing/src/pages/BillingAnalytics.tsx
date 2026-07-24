@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import {
   BarChart2,
   Download,
-  BadgeDollarSign,
   LayoutDashboard,
   RefreshCw,
   Search,
@@ -12,6 +11,34 @@ import {
 } from 'lucide-react'
 import CompactAnalytics from '../components/dashboard/CompactAnalytics'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
+
+// Custom Malaysian Ringgit icon
+const RMIcon = ({ size = 16, className = '' }: { size?: number; className?: string }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-label="Malaysian Ringgit"
+  >
+    <rect x="2" y="2" width="20" height="20" rx="4" />
+    <text
+      x="12"
+      y="16"
+      textAnchor="middle"
+      fontSize="9"
+      fontWeight="bold"
+      stroke="none"
+      fill="currentColor"
+      fontFamily="Arial, sans-serif"
+    >RM</text>
+  </svg>
+)
 import { useAuthStore, useProductStore, type Product } from '../store/store'
 import { formatCurrency, normalizeOrderMode, toNumber } from '../lib/retail'
 import { BRAND_EN, BRAND_LOGO } from '../lib/brand'
@@ -481,7 +508,7 @@ export default function BillingAnalytics() {
       label: l('Total Revenue', 'மொத்த வருவாய்'),
       helper: 'POS + manual completed bills',
       value: formatCurrency(analytics.totalCompletedRevenue),
-      icon: <BadgeDollarSign size={18} />,
+      icon: <RMIcon size={18} />,
       color: 'text-emerald-700',
       bg: 'bg-emerald-50',
     },
