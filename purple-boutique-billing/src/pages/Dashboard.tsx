@@ -1256,14 +1256,15 @@ export default function Dashboard() {
     </div>
   )
 
-  const navItems: Array<{ id: TabKey; icon: React.ReactNode; label: string }> = [
+  const allNavItems: Array<{ id: TabKey; icon: React.ReactNode; label: string }> = [
     { id: 'billing',       icon: <ShoppingCart size={20} />,     label: 'Billing Panel' },
     { id: 'advance_orders',icon: <FileText size={20} />,         label: 'Advance Orders' },
     { id: 'categories',    icon: <Package size={20} />,           label: 'Categories' },
     { id: 'history',       icon: <List size={20} />,             label: 'Order History' },
     { id: 'pos_analytics', icon: <BarChart2 size={20} />,        label: 'Analytics Dashboard' },
     { id: 'coupons',       icon: <Box size={20} />,              label: 'Coupons' },
-  ].filter(item => role === 'admin' || (item.id !== 'pos_analytics' && item.id !== 'coupons'))
+  ]
+  const navItems = allNavItems.filter(item => role === 'admin' || (item.id !== 'pos_analytics' && item.id !== 'coupons'))
 
   return (
     <div className="admin-shell h-full bg-bgMain flex flex-col lg:flex-row">
