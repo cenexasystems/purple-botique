@@ -15,4 +15,4 @@ REVOKE ALL ON FUNCTION public.get_public_invoice_by_number(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_invoice_by_number(TEXT) TO anon, authenticated;
 
 -- Force PostgREST to reload the schema cache
-NOTIFY pgrst, reload_schema;
+NOTIFY pgrst, 'reload schema';
