@@ -31,7 +31,7 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { isLoggedIn, role } = useAdminAuthStore()
   const location = useLocation()
-  if (!isLoggedIn || role !== 'admin') {
+  if (!isLoggedIn || (role !== 'admin' && role !== 'staff')) {
     return <Navigate to="/admin-login" state={{ from: location }} replace />
   }
   return <>{children}</>
