@@ -30,7 +30,7 @@ export default function AdminLogin() {
       const destination = from === '/pos' ? '/dashboard' : from
       navigate(destination, { replace: true })
     } else if (role === 'staff') {
-      navigate('/pos', { replace: true })
+      navigate('/dashboard', { replace: true })
     } else {
       setError(l('Invalid portal ID or password', 'தவறான பயனர் ID அல்லது கடவுச்சொல்'))
     }

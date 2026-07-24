@@ -115,9 +115,10 @@ export default function Dashboard() {
   const { products, fetchProducts } = useProductStore()
   const location = useLocation()
   const navigate = useNavigate()
+  const role = useAdminAuthStore(state => state.role)
   const [tab, setTab] = useState<TabKey>(() => {
     if (location.pathname === '/whatsapp-center') return 'whatsapp'
-    if (location.pathname === '/pos-analytics') return 'pos_analytics'
+    if (location.pathname === '/pos-analytics' && role === 'admin') return 'pos_analytics'
     if (location.pathname === '/advance-orders') return 'advance_orders'
     return 'billing'
   })
@@ -1262,7 +1263,7 @@ export default function Dashboard() {
     { id: 'history',       icon: <List size={20} />,             label: 'Order History' },
     { id: 'pos_analytics', icon: <BarChart2 size={20} />,        label: 'Analytics Dashboard' },
     { id: 'coupons',       icon: <Box size={20} />,              label: 'Coupons' },
-  ]
+  ].filter(item => role === 'admin' || (item.id !== 'pos_analytics' && item.id !== 'coupons'))
 
   return (
     <div className="admin-shell h-full bg-bgMain flex flex-col lg:flex-row">
