@@ -744,7 +744,15 @@ export default function Dashboard() {
   }
 
   const deleteOrder = async (orderId: string, invoiceNo: string) => {
-    if (!window.confirm(`Are you sure you want to completely delete order ${invoiceNo}? This cannot be undone.`)) return
+    if (role === 'staff') {
+      const pwd = window.prompt(`Enter admin password to delete order ${invoiceNo}:`)
+      if (pwd !== '192267') {
+        alert('Incorrect password. Deletion cancelled.')
+        return
+      }
+    } else {
+      if (!window.confirm(`Are you sure you want to completely delete order ${invoiceNo}? This cannot be undone.`)) return
+    }
     const { error } = await supabase.from('orders').delete().eq('id', orderId)
     if (error) {
       alert(`Error deleting order: ${error.message}`)
@@ -2687,11 +2695,11 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="hidden md:block overflow-x-auto rounded-xl border border-[#D1FAE5]/60 bg-[#FBFAF6]">
-                <table className="w-full min-w-[800px] text-left text-[13px]">
+                <table className="w-full text-left text-[13px]">
                   <thead className="bg-[#F9FAFB] text-[10px] uppercase tracking-wider text-[#374151]">
                     <tr>
                       {['Invoice No', 'Customer Name', 'Phone', 'Bill Type', 'Coupon', 'Discount', 'Delivery', 'Total', 'Date', 'Status', 'Actions'].map(h => (
-                        <th key={h} className="px-3 py-3 font-black">{h}</th>
+                        <th key={h} className="px-2 py-3 font-black text-center">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -2701,38 +2709,38 @@ export default function Dashboard() {
                       const billTypeClass = normalizeOrderType(o.order_type) === 'manual_sale' ? 'bg-purple-50 text-purple-700' : normalizeOrderMode(o.order_mode) === 'online' ? 'bg-blue-50 text-blue-700' : 'bg-orange-50 text-orange-700'
                       return (
                         <React.Fragment key={o.id}>
-                        <tr key={o.id} className="hover:bg-[#F9FAFB]">
-                          <td className="whitespace-nowrap px-3 py-3 text-[12px] font-bold text-[#111111]">{o.invoice_no || '—'}</td>
-                          <td className="max-w-[110px] truncate px-3 py-3 text-[12px] font-semibold text-[#111111]">{o.customer_name}</td>
-                          <td className="whitespace-nowrap px-3 py-3 text-[12px] text-[#374151]">{o.phone}</td>
-                          <td className="px-3 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${billTypeClass}`}>{billTypeLabel}</span></td>
-                          <td className="px-3 py-3 text-[12px]">
+                        <tr key={o.id} className="hover:bg-[#F9FAFB] text-center">
+                          <td className="whitespace-nowrap px-2 py-3 text-[11px] font-bold text-[#111111]">{o.invoice_no || '—'}</td>
+                          <td className="max-w-[100px] truncate px-2 py-3 text-[11px] font-semibold text-[#111111]">{o.customer_name}</td>
+                          <td className="whitespace-nowrap px-2 py-3 text-[11px] text-[#374151]">{o.phone}</td>
+                          <td className="px-2 py-3"><span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase ${billTypeClass}`}>{billTypeLabel}</span></td>
+                          <td className="px-2 py-3 text-[11px]">
                             {o.coupon_code ? <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">{o.coupon_code}</span> : <span className="text-[#9BAB9A]">—</span>}
                           </td>
-                          <td className="px-3 py-3 text-[12px]">
+                          <td className="px-2 py-3 text-[11px]">
                             {o.discount_amount > 0 ? <span className="font-bold text-emerald-700">-{formatCurrency(o.discount_amount)}</span> : <span className="text-[#9BAB9A]">—</span>}
                           </td>
-                          <td className="px-3 py-3 text-[12px]">
+                          <td className="px-2 py-3 text-[11px]">
                             {o.delivery_charge > 0 ? <span className="font-bold text-[#111111]">{formatCurrency(o.delivery_charge)}</span> : <span className="text-[#9BAB9A]">—</span>}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-3 text-[13px] font-bold text-[#111111]">{formatCurrency(toNumber(o.total, 0))}</td>
-                          <td className="whitespace-nowrap px-3 py-3 text-[12px] text-[#374151]">{new Date(o.created_at).toLocaleDateString('en-IN')}</td>
-                          <td className="px-3 py-3">
-                            <div className="flex items-center gap-2">
+                          <td className="whitespace-nowrap px-2 py-3 text-[11px] font-bold text-[#111111]">{formatCurrency(toNumber(o.total, 0))}</td>
+                          <td className="whitespace-nowrap px-2 py-3 text-[11px] text-[#374151]">{new Date(o.created_at).toLocaleDateString('en-IN')}</td>
+                          <td className="px-2 py-3">
+                            <div className="flex items-center justify-center gap-1.5">
                               <select value={normalizeStatus(o.status)} onChange={e => void updateOrderStatus(o.id, e.target.value)}
-                                className={`cursor-pointer rounded-lg border px-2 py-1 text-[11px] font-black outline-none ${normalizeStatus(o.status) === 'completed' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                                className={`cursor-pointer rounded-lg border px-1.5 py-1 text-[10px] font-black outline-none ${normalizeStatus(o.status) === 'completed' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
                                 <option value="pending">{l('Pending', 'நிலுவை')}</option>
                                 <option value="completed">{l('Completed', 'முடிந்தது')}</option>
                               </select>
                               <button onClick={() => void deleteOrder(o.id, o.invoice_no)} className="rounded-lg p-1 text-[#047857] transition-colors hover:bg-[#047857]/5" title="Delete Order">
-                                <Trash2 size={14} />
+                                <Trash2 size={13} />
                               </button>
                             </div>
                           </td>
-                          <td className="px-3 py-3">
-                            <div className="flex items-center gap-1">
-                              <button onClick={() => void openOrderInvoice(o, 'view')} className="rounded-lg p-1.5 text-[#111111] transition-colors hover:bg-[#F9FAFB]" title="View Invoice">
-                                <Eye size={14} />
+                          <td className="px-2 py-3">
+                            <div className="flex items-center justify-center gap-1">
+                              <button onClick={() => void openOrderInvoice(o, 'view')} className="rounded-lg p-1 text-[#111111] transition-colors hover:bg-[#F9FAFB]" title="View Invoice">
+                                <Eye size={13} />
                               </button>
                               <button onClick={() => window.open(`/invoice/${o.id}`, '_blank')} className="rounded-lg p-1.5 text-green-600 transition-colors hover:bg-green-50" title="Invoice & Share">
                                 <MessageCircle size={14} />
