@@ -101,9 +101,9 @@ Dear ${customerName},
 🧾 Advance Deposit Details 👇
 📦 Deposit ID: ${input.depositId}
 👗 Product: ${input.productName}
-💵 Total Order Amount: ₹${input.totalAmount}
-💰 Advance Paid: ₹${input.depositAmount}${input.paymentMethod ? ` (${input.paymentMethod.toUpperCase()})` : ''}
-🔴 Balance to Pay on Delivery: ₹${input.remainingBalance}
+💵 Total Order Amount: RM${input.totalAmount}
+💰 Advance Paid: RM${input.depositAmount}${input.paymentMethod ? ` (${input.paymentMethod.toLowerCase() === 'upi' ? 'QR' : input.paymentMethod.toUpperCase()})` : ''}
+🔴 Balance to Pay on Delivery: RM${input.remainingBalance}
 📅 Expected Delivery Date: ${deliveryDateFormatted}
 
 .

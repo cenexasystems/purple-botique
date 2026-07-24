@@ -200,7 +200,7 @@ export async function createAdvanceOrder(input: {
     const currentTimeline = loadLocalTimeline()
     currentTimeline.push(
       { id: Date.now(), advance_order_id: orderId, event_type: 'created', label: 'Deposit Created', remarks: input.remarks, created_at: now.toISOString() },
-      { id: Date.now() + 1, advance_order_id: orderId, event_type: 'deposit_received', label: 'Deposit Received', remarks: `Received RM${input.depositAmount} via ${input.paymentMethod.toUpperCase()}`, created_at: now.toISOString() }
+      { id: Date.now() + 1, advance_order_id: orderId, event_type: 'deposit_received', label: 'Deposit Received', remarks: `Received RM${input.depositAmount} via ${input.paymentMethod.toLowerCase() === 'upi' ? 'QR' : input.paymentMethod.toUpperCase()}`, created_at: now.toISOString() }
     )
     saveLocalTimeline(currentTimeline)
 
