@@ -27,7 +27,7 @@ import {
 import { buildProfessionalWhatsAppMessage } from '../lib/whatsappMessage'
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { getProductImage, onImgError } from '../lib/productImages'
-import { normalizeIndianPhone, toWhatsAppUrl } from '../lib/phone'
+import { normalizePhone, toWhatsAppUrl } from '../lib/phone'
 import { useLangStore } from '../store/langStore'
 import type { ProductVariant } from '../services/variantService'
 
@@ -466,8 +466,8 @@ export default function Pos(props: PosProps = {}) {
   const generateBill = async () => {
     if (!items.length) { setError('Add at least one product.'); return }
     // Validate required phone
-    const normalizedPhone = normalizeIndianPhone(customer.phone || '')
-    if (!normalizedPhone) { setError('Please enter a valid Indian mobile number (e.g. 9876543210 or +91 9876543210)'); return }
+    const normalizedPhone = normalizePhone(customer.phone || '')
+    if (!normalizedPhone) { setError('Please enter a valid Malaysian mobile number (e.g. 0123456789 or +60 0123456789)'); return }
     // Validate payment amount
     if (!cashReceived.trim()) { setError('Enter the amount received from customer'); return }
     if (cashReceivedNum < total) { setError(`Insufficient payment. Customer still owes ${formatCurrency(total - cashReceivedNum)}`); return }
@@ -1068,8 +1068,8 @@ export default function Pos(props: PosProps = {}) {
                       type="text"
                       value={customer.phone}
                       onChange={e => setCustomer({...customer, phone: e.target.value})}
-                      placeholder="9876543210"
-                      className={`w-full h-8 px-2 bg-white border rounded-lg text-[12px] font-bold text-[#111111] focus:outline-none ${customer.phone && !normalizeIndianPhone(customer.phone) ? 'border-red-400 bg-red-50' : 'border-[#D1FAE5]/60 focus:border-[#047857]'}`}
+                      placeholder="0123456789"
+                      className={`w-full h-8 px-2 bg-white border rounded-lg text-[12px] font-bold text-[#111111] focus:outline-none ${customer.phone && !normalizePhone(customer.phone) ? 'border-red-400 bg-red-50' : 'border-[#D1FAE5]/60 focus:border-[#047857]'}`}
                     />
                   </div>
                 </div>

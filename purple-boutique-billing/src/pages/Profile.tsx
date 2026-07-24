@@ -6,7 +6,7 @@ import { Package, User, LogOut, ChevronDown, ChevronUp, ShoppingBag, Settings, E
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { formatCurrency, formatQuantityDisplay, normalizeStructuredOrderItem } from '../lib/retail'
 
-const PHONE_RE = /^[6-9]\d{9}$/
+
 
 interface ProfileOrderItem {
   product_id: string | null   // UUID — Supabase products.id is UUID
@@ -109,7 +109,7 @@ export default function Profile() {
     const trimName  = editName.trim()
     const trimPhone = editPhone.replace(/\D/g, '')
     if (!trimName || trimName.length < 2) { setSaveErr('Name must be at least 2 characters.'); return }
-    if (trimPhone && !PHONE_RE.test(trimPhone)) { setSaveErr('Enter a valid 10-digit Indian mobile number.'); return }
+    if (trimPhone && !PHONE_RE.test(trimPhone)) { setSaveErr('Enter a valid Malaysian mobile number.'); return }
     if (!user) return
 
     setSaving(true); setSaveErr('')
@@ -365,7 +365,7 @@ export default function Profile() {
                       </label>
                       <div className="flex gap-2">
                         <span className="flex items-center px-3 py-3 bg-[#F9FAFB] border-2 border-sand rounded-xl text-[13px] font-bold text-textMuted shrink-0 select-none">
-                          🇮🇳 +91
+                          🇮🇳 +60
                         </span>
                         <input
                           type="tel"
@@ -373,7 +373,7 @@ export default function Profile() {
                           className="flex-1 px-4 py-3 rounded-xl border-2 border-sand focus:border-sageDark outline-none text-[13px]"
                           value={editPhone}
                           onChange={e => { setEditPhone(e.target.value.replace(/\D/g, '')); setSaveErr('') }}
-                          placeholder="9876543210"
+                          placeholder="0123456789"
                         />
                       </div>
                     </div>
