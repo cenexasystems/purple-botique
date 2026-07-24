@@ -161,21 +161,8 @@ export const createOrderWithStock = async (input: CreateOrderInput): Promise<Cre
     throw new Error('Order RPC returned an invalid payload')
   }
 
-  if (couponCode) {
-    try {
-      const { data: cData } = await supabase
-        .from('coupons')
-        .select('id, usage_count')
-        .ilike('code', couponCode.trim())
-        .maybeSingle()
-      if (cData) {
-        await supabase
-          .from('coupons')
-          .update({ usage_count: Number(cData.usage_count || 0) + 1 })
-          .eq('id', cData.id)
-      }
-    } catch { /* ignore coupon increment error */ }
-  }
+  // NOTE: coupon usage_count is already incremented atomically inside the
+  // create_order_with_stock DB function. Do NOT increment it again here.
 
   return {
     orderId,
