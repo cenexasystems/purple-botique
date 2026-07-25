@@ -97,7 +97,7 @@ const parseOrderItems = (items: unknown): Record<string, unknown>[] => {
 
 // When o.total is 0 (legacy orders saved with bug), compute it from the items JSON
 const getOrderTotal = (order: { total: unknown; items: unknown; shipping?: unknown; delivery_charge?: unknown; total_gst?: unknown; discount_amount?: unknown; manual_discount_amount?: unknown }): number => {
-  const stored = getOrderTotal(order)
+  const stored = toNumber(order.total, 0)
   if (stored > 0) return stored
   const items = parseOrderItems(order.items)
   const subtotal = items.reduce((sum, item) => {
