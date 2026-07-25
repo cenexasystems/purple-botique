@@ -773,13 +773,9 @@ export default function Dashboard() {
     } else {
       if (!window.confirm(`Are you sure you want to completely delete order ${invoiceNo}? This cannot be undone.`)) return
     }
-    const { data: deleted, error } = await supabase.from('orders').delete().eq('id', orderId).select('id')
+    const { error } = await supabase.from('orders').delete().eq('id', orderId)
     if (error) {
       alert(`Error deleting order: ${error.message}`)
-      return
-    }
-    if (!deleted || deleted.length === 0) {
-      alert('Could not delete this order. It may have already been deleted or you may not have permission.')
       return
     }
     // Track deleted ID so re-searches don't bring it back
