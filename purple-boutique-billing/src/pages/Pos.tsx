@@ -551,11 +551,12 @@ export default function Pos(props: PosProps = {}) {
     ? Number(cashReceived) - total : null
 
   const sendPosWhatsApp = (inv: InvoiceSnap) => {
-    const invoiceUrl = inv.invoicePdfUrl || `${window.location.origin}/invoice/${inv.invoiceNo}`
+    const invoiceUrl = `${window.location.origin}/invoice/${encodeURIComponent(inv.invoiceNo)}`
     const message = buildProfessionalWhatsAppMessage({
       customerName: inv.customerName,
       phone: inv.phone,
       invoiceNumber: inv.invoiceNo,
+      invoiceUrl,
       paymentMode: inv.paymentMode || 'POS',
       items: inv.items.map((item) => ({
         name: item.name,
@@ -571,7 +572,7 @@ export default function Pos(props: PosProps = {}) {
       shipping: inv.shipping,
       gstAmount: inv.gstAmount,
       total: inv.total,
-    }) + `\n\n📄 Invoice PDF: ${invoiceUrl}`
+    })
     window.open(toWhatsAppUrl(inv.phone || customer.phone || '', message), '_blank', 'noopener,noreferrer')
   }
 

@@ -66,12 +66,6 @@ ${input.invoiceDate ? `📅 *Date:* ${new Date(input.invoiceDate).toLocaleDateSt
 ${itemsText ? `📦 *ITEMS ORDERED:*\n${itemsText}\n\n` : ''}📄 *View & Download Digital Invoice / PDF:*
 👉 ${invoiceUrl}
 
-📸 *Follow us on Instagram for latest collections & updates:*
-https://www.instagram.com/purple_boutique05?igsh=N3NqaWljMTFvMmQ=r
-
-💬 *We would love your feedback:*
-⭐ https://forms.gle/JcTw9uVkH4K9YbcD8
-
 💚 Thank you, and we hope to see you again soon!
 🙏 நன்றி! மீண்டும் சந்திப்போம்`
 }
