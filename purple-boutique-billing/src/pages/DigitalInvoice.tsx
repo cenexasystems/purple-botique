@@ -213,8 +213,8 @@ const invoiceItems = (Array.isArray(invoice.items) ? invoice.items : [])
       subtotal,
       shipping: invoice.delivery_charge || 0,
       couponDiscount: invoice.discount_amount || 0,
-      totalGst: invoice.total_gst || 0,
-      total: invoice.total
+      totalGst: invoice.total_gst || invoice.gst_amount || 0,
+      total: invoice.total > 0 ? invoice.total : (subtotal + (invoice.delivery_charge || 0) + (invoice.total_gst || invoice.gst_amount || 0) - (invoice.discount_amount || 0) - (invoice.manual_discount_amount || 0))
     })
   }
 
@@ -256,7 +256,7 @@ const invoiceItems = (Array.isArray(invoice.items) ? invoice.items : [])
             manualDiscountAmount={invoice.manual_discount_amount || 0}
             gstAmount={invoice.total_gst || invoice.gst_amount || 0}
             couponCode={invoice.coupon_code}
-            total={invoice.total}
+            total={invoice.total > 0 ? invoice.total : (subtotal + (invoice.delivery_charge || 0) + (invoice.total_gst || invoice.gst_amount || 0) - (invoice.discount_amount || 0) - (invoice.manual_discount_amount || 0))}
             status={invoice.status}
             paymentMode={invoice.payment_mode || invoice.payment_method}
             onPrintReceipt={printReceipt}
