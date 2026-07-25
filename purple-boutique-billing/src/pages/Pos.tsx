@@ -17,6 +17,7 @@ import { uploadInvoicePdf } from '../lib/storage'
 import { createOrderWithStock } from '../services/orderService'
 import { createAdvanceOrder, type AdvanceOrder, type AdvancePaymentMethod } from '../services/advanceOrderService'
 import { advanceReceiptPdf, downloadFile, printAdvanceReceipt } from '../lib/advanceReceipt'
+import { printThermalReceipt } from '../lib/thermalPrint'
 import {
   buildStructuredOrderItem,
   calculateLineTotal,
@@ -129,6 +130,7 @@ export default function Pos(props: PosProps = {}) {
   const [error, setError] = useState('')
   const [invoice, setInvoice] = useState<InvoiceSnap | null>(null)
   const [cashReceived, setCashReceived] = useState<string>('')
+  const [paymentType, setPaymentType] = useState<'cash' | 'qr' | 'card'>('cash')
   const [mobilePanelView, setMobilePanelView] = useState<'catalogue' | 'bill'>('catalogue')
   const [orderMode, setOrderMode] = useState<'online' | 'offline'>('offline')
   const [variantPickerProduct, setVariantPickerProduct] = useState<Product | null>(null)
@@ -469,14 +471,14 @@ export default function Pos(props: PosProps = {}) {
     // Validate required phone
     const normalizedPhone = normalizePhone(customer.phone || '')
     if (!normalizedPhone) { setError('Please enter a valid Malaysian mobile number (e.g. 0123456789 or +60 0123456789)'); return }
-    // Validate payment amount
-    if (!cashReceived.trim()) { setError('Enter the amount received from customer'); return }
-    if (cashReceivedNum < total) { setError(`Insufficient payment. Customer still owes ${formatCurrency(total - cashReceivedNum)}`); return }
+    // Validate payment amount (only required for cash)
+    if (paymentType === 'cash' && !cashReceived.trim()) { setError('Enter the amount received from customer'); return }
+    if (paymentType === 'cash' && cashReceivedNum < total) { setError(`Insufficient payment. Customer still owes ${formatCurrency(total - cashReceivedNum)}`); return }
     // Validate online mode availability
     if (orderMode === 'online' && !isSupabaseConfigured) { setError('Cannot place online orders while offline'); return }
     setSaving(true); setError('')
     try {
-      const paymentMode = orderMode === 'online' ? 'online' : cashReceivedNum > 0 ? 'cash' : 'pos'
+      const paymentMode = orderMode === 'online' ? 'online' : paymentType
       const created = await createOrderWithStock({
         customerName: customer.name.trim() || 'Walk-in Customer',
         phone: normalizedPhone,
@@ -546,7 +548,7 @@ export default function Pos(props: PosProps = {}) {
         address: customer.address.trim() || 'POS Counter',
         amountReceived: cashReceivedNum,
         balanceReturned: balanceToReturn,
-        paymentMode: orderMode === 'online' ? 'Online' : cashReceivedNum > 0 ? 'Cash' : 'POS',
+        paymentMode: orderMode === 'online' ? 'Online' : paymentType === 'qr' ? 'QR' : paymentType === 'card' ? 'Card' : 'Cash',
         paymentMethod: paymentMode,
       }
       setInvoice(createdInvoice)
@@ -623,10 +625,20 @@ export default function Pos(props: PosProps = {}) {
   }
 
   const printReceipt = (inv: InvoiceSnap) => {
-    // Use the same public invoice route shared with the customer on WhatsApp.
-    // That page has the downloadable PDF action and works for both POS and
-    // customer-facing invoices.
-    window.location.assign(`${window.location.origin}/invoice/${encodeURIComponent(inv.invoiceNo)}`)
+    // Print a Bluetooth/thermal receipt directly
+    printThermalReceipt({
+      invoiceNo: inv.invoiceNo,
+      date: inv.date,
+      customerName: inv.customerName,
+      phone: inv.phone,
+      items: inv.items.map(item => ({ name: item.name, qty: item.qty, unit: item.selectedUnit, price: item.basePrice, line_total: item.lineTotal })),
+      subtotal: inv.subtotal,
+      shipping: inv.shipping,
+      couponDiscount: inv.couponDiscount,
+      manualDiscountAmount: inv.manualDiscountAmount,
+      totalGst: inv.gstAmount,
+      total: inv.total,
+    })
   }
 
   // ══ INVOICE SCREEN ════════════════════════════════════════════════════
@@ -1079,12 +1091,12 @@ export default function Pos(props: PosProps = {}) {
                     />
                   </div>
                   <div className="p-2">
-                    <span className="text-[10px] text-[#374151] uppercase block mb-0.5">Phone Number</span>
+                    <span className="text-[10px] text-[#374151] uppercase block mb-0.5">WhatsApp Number</span>
                     <input
                       type="text"
                       value={customer.phone}
                       onChange={e => setCustomer({...customer, phone: e.target.value})}
-                      placeholder="0123456789"
+                      placeholder="Enter WhatsApp number"
                       className={`w-full h-8 px-2 bg-white border rounded-lg text-[12px] font-bold text-[#111111] focus:outline-none ${customer.phone && !normalizePhone(customer.phone) ? 'border-red-400 bg-red-50' : 'border-[#D1FAE5]/60 focus:border-[#047857]'}`}
                     />
                   </div>
@@ -1241,10 +1253,32 @@ export default function Pos(props: PosProps = {}) {
                 </div>
               </div>
 
-              {/* Cash Payment */}
+              {/* Payment Mode Selector */}
+              <div>
+                <label className="block text-[10px] font-black text-[#374151] tracking-wider uppercase mb-1">Payment Mode</label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(['cash', 'qr', 'card'] as const).map(mode => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setPaymentType(mode)}
+                      className={`py-2 rounded-xl text-[11px] font-black uppercase tracking-wide border-2 transition-colors ${
+                        paymentType === mode
+                          ? 'bg-[#047857] text-white border-[#047857]'
+                          : 'bg-white text-[#374151] border-[#D1FAE5]/60 hover:border-[#047857]/40'
+                      }`}
+                    >
+                      {mode === 'qr' ? 'QR / DuitNow' : mode === 'card' ? 'Card' : 'Cash'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Amount Received (only shown for cash) */}
+              {paymentType === 'cash' && (
               <div>
                 <div className="border border-[#D1FAE5]/60 rounded-xl p-2.5 bg-white">
-                  <label className="block text-[10px] font-black text-[#374151] tracking-wider uppercase mb-0.5">Cash Payment — Amount Received (RM)</label>
+                  <label className="block text-[10px] font-black text-[#374151] tracking-wider uppercase mb-0.5">Cash — Amount Received (RM)</label>
                   <input
                     type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     value={cashReceived}
@@ -1260,6 +1294,7 @@ export default function Pos(props: PosProps = {}) {
                   )}
                 </div>
               </div>
+              )}
 
               {error && (
                 <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-[11px] font-bold">
