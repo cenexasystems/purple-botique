@@ -251,6 +251,8 @@ export default function Dashboard() {
     setTab(tabKey)
   }
 
+  const deletedOrderIds = React.useRef<Set<string>>(new Set())
+
   const toDashboardOrder = (row: Record<string, unknown>): DashboardOrder => ({
     id: String(row.id || ''), invoice_no: String(row.invoice_no || ''),
     customer_name: String(row.customer_name || ''), phone: String(row.phone || ''),
@@ -771,16 +773,19 @@ export default function Dashboard() {
     } else {
       if (!window.confirm(`Are you sure you want to completely delete order ${invoiceNo}? This cannot be undone.`)) return
     }
-    const { error } = await supabase.from('orders').delete().eq('id', orderId)
+    const { data: deleted, error } = await supabase.from('orders').delete().eq('id', orderId).select('id')
     if (error) {
       alert(`Error deleting order: ${error.message}`)
       return
     }
-    // Optimistically remove from local state immediately
+    if (!deleted || deleted.length === 0) {
+      alert('Could not delete this order. It may have already been deleted or you may not have permission.')
+      return
+    }
+    // Track deleted ID so re-searches don't bring it back
+    deletedOrderIds.current.add(orderId)
     setOrders(prev => prev.filter(o => o.id !== orderId))
     setSearchResults(prev => prev.filter(o => o.id !== orderId))
-    // Re-sync from DB to prevent order reappearing on next search/reload
-    await loadData()
   }
 
   const getOrderWhatsAppPreview = (order: DashboardOrder) => {
@@ -1052,7 +1057,7 @@ export default function Dashboard() {
 
       const { data, error } = await q
       if (error) throw error
-      setSearchResults((data || []).map(r => toDashboardOrder(r as Record<string,unknown>)))
+      setSearchResults((data || []).map(r => toDashboardOrder(r as Record<string,unknown>)).filter(o => !deletedOrderIds.current.has(o.id)))
     } catch (err) { console.error(err); setSearchResults([]) }
     finally { setSearchLoading(false) }
   }
