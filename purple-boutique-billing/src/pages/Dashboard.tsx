@@ -95,6 +95,24 @@ const parseOrderItems = (items: unknown): Record<string, unknown>[] => {
   return []
 }
 
+// When o.total is 0 (legacy orders saved with bug), compute it from the items JSON
+const getOrderTotal = (order: { total: unknown; items: unknown; shipping?: unknown; delivery_charge?: unknown; total_gst?: unknown; discount_amount?: unknown; manual_discount_amount?: unknown }): number => {
+  const stored = getOrderTotal(order)
+  if (stored > 0) return stored
+  const items = parseOrderItems(order.items)
+  const subtotal = items.reduce((sum, item) => {
+    const lineTotal = toNumber(item.line_total ?? item.lineTotal, 0)
+    if (lineTotal > 0) return sum + lineTotal
+    return sum + toNumber(item.base_price ?? item.basePrice ?? item.price, 0) * Math.max(1, toNumber(item.quantity, 1))
+  }, 0)
+  return Math.max(0, subtotal
+    + toNumber(order.shipping ?? order.delivery_charge, 0)
+    + toNumber(order.total_gst, 0)
+    - toNumber(order.discount_amount, 0)
+    - toNumber(order.manual_discount_amount, 0)
+  )
+}
+
 const emptyForm = {
   name: '', nameTa: '', category: '', categoryId: null as string | number | null,
   remedy: [] as string[], price: 0, offerPrice: '' as string | number,
@@ -112,7 +130,7 @@ const exportCSV = (orders: DashboardOrder[]) => {
   const rows = orders.map(o => [
     o.order_type === 'online_request' ? o.id : o.invoice_no, o.customer_name, o.phone,
     new Date(o.created_at).toLocaleDateString('en-MY'),
-    toNumber(o.total, 0).toFixed(2), o.order_type, o.status,
+    getOrderTotal(o).toFixed(2), o.order_type, o.status,
   ])
   const csv = [header, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
@@ -323,11 +341,11 @@ export default function Dashboard() {
     const manualSales = billableCompleted.filter(o => normalizeOrderType(o.order_type) === 'manual_sale')
 
     // Revenue (WhatsApp never included)
-    const completedRevenue   = billableCompleted.reduce((s, o) => s + toNumber(o.total, 0), 0)
+    const completedRevenue   = billableCompleted.reduce((s, o) => s + getOrderTotal(o), 0)
     const averageRevenuePerBill = billableCompleted.length > 0 ? completedRevenue / billableCompleted.length : 0
-    const posRevenue         = offlinePOS.reduce((s, o) => s + toNumber(o.total, 0), 0)
-    const onlinePosRevenue   = onlinePOS.reduce((s, o) => s + toNumber(o.total, 0), 0)
-    const manualRevenue      = manualSales.reduce((s, o) => s + toNumber(o.total, 0), 0)
+    const posRevenue         = offlinePOS.reduce((s, o) => s + getOrderTotal(o), 0)
+    const onlinePosRevenue   = onlinePOS.reduce((s, o) => s + getOrderTotal(o), 0)
+    const manualRevenue      = manualSales.reduce((s, o) => s + getOrderTotal(o), 0)
 
     const toLocalDateKey = (value: string | Date) => {
       const date = value instanceof Date ? value : new Date(value)
@@ -341,7 +359,7 @@ export default function Dashboard() {
 
     const todayKey  = toLocalDateKey(new Date())
     const monthKey  = todayKey.slice(0, 7)
-    const todaySales   = orders.filter(o => isCompletedStatus(o.status) && o.order_type !== 'whatsapp_request' && toLocalDateKey(o.created_at) === todayKey).reduce((s, o) => s + toNumber(o.total, 0), 0)
+    const todaySales   = orders.filter(o => isCompletedStatus(o.status) && o.order_type !== 'whatsapp_request' && toLocalDateKey(o.created_at) === todayKey).reduce((s, o) => s + getOrderTotal(o), 0)
 
     // Today-specific analytics (for TODAY'S SALES tab)
     const todayOrders = billableCompleted.filter(o => toLocalDateKey(o.created_at) === todayKey)
@@ -356,7 +374,7 @@ export default function Dashboard() {
     const hourlyMap = new Map<string, number>()
     todayOrders.forEach(o => {
       const hour = String(new Date(o.created_at).getHours()).padStart(2, '0')
-      hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + toNumber(o.total, 0))
+      hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + getOrderTotal(o))
     })
     const todayHourlyTrend = Array.from({ length: 24 }, (_, i) => {
       const h = String(i).padStart(2, '0')
@@ -385,9 +403,9 @@ export default function Dashboard() {
     const todayOffline = todayOrders.filter(o => normalizeOrderType(o.order_type) === 'pos_sale' && normalizeOrderMode(o.order_mode) !== 'online')
     const todayOnline = todayOrders.filter(o => normalizeOrderType(o.order_type) === 'pos_sale' && normalizeOrderMode(o.order_mode) === 'online')
     const todayManual = todayOrders.filter(o => normalizeOrderType(o.order_type) === 'manual_sale')
-    const todayOfflineRevenue = todayOffline.reduce((s, o) => s + toNumber(o.total, 0), 0)
-    const todayOnlineRevenue = todayOnline.reduce((s, o) => s + toNumber(o.total, 0), 0)
-    const todayManualRevenue = todayManual.reduce((s, o) => s + toNumber(o.total, 0), 0)
+    const todayOfflineRevenue = todayOffline.reduce((s, o) => s + getOrderTotal(o), 0)
+    const todayOnlineRevenue = todayOnline.reduce((s, o) => s + getOrderTotal(o), 0)
+    const todayManualRevenue = todayManual.reduce((s, o) => s + getOrderTotal(o), 0)
 
     // Product hourly trend (products sold per hour today)
     const productHourlyMap = new Map<string, number>()
@@ -403,7 +421,7 @@ export default function Dashboard() {
       return { hour: `${h12} ${ampm}`, key: h, qty: productHourlyMap.get(h) || 0 }
     })
 
-    const monthlyRevenue = billableCompleted.filter(o => toLocalMonthKey(o.created_at) === monthKey).reduce((s, o) => s + toNumber(o.total, 0), 0)
+    const monthlyRevenue = billableCompleted.filter(o => toLocalMonthKey(o.created_at) === monthKey).reduce((s, o) => s + getOrderTotal(o), 0)
 
     // Item-level analytics
     const completedIds = new Set(billableCompleted.map(o => o.id))
@@ -473,7 +491,7 @@ export default function Dashboard() {
     const monthlyRevenueMap = new Map<string, number>()
     allBillableCompleted.forEach(o => {
       const k = toLocalMonthKey(o.created_at)
-      monthlyRevenueMap.set(k, (monthlyRevenueMap.get(k) || 0) + toNumber(o.total, 0))
+      monthlyRevenueMap.set(k, (monthlyRevenueMap.get(k) || 0) + getOrderTotal(o))
     })
     const monthlyTrend = Array.from({ length: 12 }, (_, i) => {
       const d = new Date(chartYear, i, 1)
@@ -484,7 +502,7 @@ export default function Dashboard() {
     const weeklyRevenueMap = new Map<string, number>()
     allBillableCompleted.forEach(o => {
       const k = toLocalDateKey(o.created_at)
-      weeklyRevenueMap.set(k, (weeklyRevenueMap.get(k) || 0) + toNumber(o.total, 0))
+      weeklyRevenueMap.set(k, (weeklyRevenueMap.get(k) || 0) + getOrderTotal(o))
     })
 
     const currentDayOfWeek = new Date().getDay() || 7 // 1: Mon, ..., 7: Sun
@@ -1479,7 +1497,7 @@ export default function Dashboard() {
                           <tr key={o.id} className="hover:bg-[#F9FAFB]/50">
                             <td className="px-3 py-2.5 font-bold text-[#10B981] text-[11px]">{o.invoice_no || '-'}</td>
                             <td className="px-3 py-2.5 font-semibold text-[#111111] max-w-[100px] truncate">{o.customer_name}</td>
-                            <td className="px-3 py-2.5 font-black text-[#111111]">{formatCurrency(toNumber(o.total, 0))}</td>
+                            <td className="px-3 py-2.5 font-black text-[#111111]">{formatCurrency(getOrderTotal(o))}</td>
                             <td className="px-3 py-2.5 text-[#7A846F] whitespace-nowrap">{new Date(o.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
                             <td className="px-3 py-2.5"><span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${btClass}`}>{btLabel}</span></td>
                             <td className="px-3 py-2.5">
@@ -1712,7 +1730,7 @@ export default function Dashboard() {
                             lineTotal: item.line_total,
                           })),
                           subtotal: normalizedItems.reduce((sum, item) => sum + item.line_total, 0),
-                          total: toNumber(order.total, 0),
+                          total: getOrderTotal(order),
                           paymentMode: order.payment_mode || order.payment_method,
                         })
 
@@ -1725,7 +1743,7 @@ export default function Dashboard() {
                               <td className="px-4 py-3 text-center">
                                 <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-[11px] font-black">{its.length}</span>
                               </td>
-                              <td className="px-4 py-3 font-black text-[#111111]">{formatCurrency(toNumber(order.total, 0))}</td>
+                              <td className="px-4 py-3 font-black text-[#111111]">{formatCurrency(getOrderTotal(order))}</td>
                               <td className="px-4 py-3 text-[#7A846F] whitespace-nowrap text-[11px]">
                                 <div>{new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
                                 <div className="text-[10px]">{new Date(order.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</div>
@@ -1821,7 +1839,7 @@ export default function Dashboard() {
                                           <tfoot className="bg-[#F9FAFB] border-t border-[#D1FAE5]/30">
                                             <tr>
                                               <td colSpan={5} className="px-4 py-2.5 text-right font-black text-[#374151] text-[11px] uppercase tracking-wider">{l('Grand Total', 'மொத்த தொகை')}</td>
-                                              <td className="px-4 py-2.5 text-right font-black text-[18px] text-[#111111]">{formatCurrency(toNumber(order.total, 0))}</td>
+                                              <td className="px-4 py-2.5 text-right font-black text-[18px] text-[#111111]">{formatCurrency(getOrderTotal(order))}</td>
                                             </tr>
                                           </tfoot>
                                         </table>
@@ -2218,7 +2236,7 @@ export default function Dashboard() {
                               <tr key={o.id} className="hover:bg-[#F9FAFB]/50">
                                 <td className="px-3 py-2.5 font-bold text-[#10B981] text-[11px]">{o.invoice_no || '-'}</td>
                                 <td className="px-3 py-2.5 font-semibold text-[#111111] max-w-[100px] truncate">{o.customer_name}</td>
-                                <td className="px-3 py-2.5 font-black text-[#111111]">{formatCurrency(toNumber(o.total, 0))}</td>
+                                <td className="px-3 py-2.5 font-black text-[#111111]">{formatCurrency(getOrderTotal(o))}</td>
                                 <td className="px-3 py-2.5 text-[#374151] whitespace-nowrap">{new Date(o.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</td>
                                 <td className="px-3 py-2.5"><span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${btClass}`}>{btLabel}</span></td>
                                 <td className="px-3 py-2.5">
@@ -2655,7 +2673,7 @@ export default function Dashboard() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-[#9BAB9A] uppercase text-[10px] sm:text-[11px] font-black">Total</p>
-                          <p className="font-black text-[#111111]">{formatCurrency(toNumber(o.total, 0))}</p>
+                          <p className="font-black text-[#111111]">{formatCurrency(getOrderTotal(o))}</p>
                         </div>
                         <div>
                           <p className="text-[#9BAB9A] uppercase text-[11px] font-black">Coupon</p>
@@ -2726,7 +2744,7 @@ export default function Dashboard() {
                           <td className="px-2 py-3 text-[11px]">
                             {o.delivery_charge > 0 ? <span className="font-bold text-[#111111]">{formatCurrency(o.delivery_charge)}</span> : <span className="text-[#9BAB9A]">—</span>}
                           </td>
-                          <td className="whitespace-nowrap px-2 py-3 text-[11px] font-bold text-[#111111]">{formatCurrency(toNumber(o.total, 0))}</td>
+                          <td className="whitespace-nowrap px-2 py-3 text-[11px] font-bold text-[#111111]">{formatCurrency(getOrderTotal(o))}</td>
                           <td className="whitespace-nowrap px-2 py-3 text-[11px] text-[#374151]">{new Date(o.created_at).toLocaleDateString('en-IN')}</td>
                           <td className="px-2 py-3">
                             <div className="flex items-center justify-center gap-1.5">
