@@ -1274,11 +1274,13 @@ export default function Pos(props: PosProps = {}) {
                 </div>
               </div>
 
-              {/* Amount Received (only shown for cash) */}
-              {paymentType === 'cash' && (
+              {/* Amount Received (shown for all payment modes) */}
+              {orderMode !== 'online' && (
               <div>
                 <div className="border border-[#D1FAE5]/60 rounded-xl p-2.5 bg-white">
-                  <label className="block text-[10px] font-black text-[#374151] tracking-wider uppercase mb-0.5">Cash — Amount Received (RM)</label>
+                  <label className="block text-[10px] font-black text-[#374151] tracking-wider uppercase mb-0.5">
+                    {paymentType === 'qr' ? 'QR' : paymentType === 'card' ? 'Card' : 'Cash'} — Amount Received (RM)
+                  </label>
                   <input
                     type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     value={cashReceived}
