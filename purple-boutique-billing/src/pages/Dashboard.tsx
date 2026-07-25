@@ -758,8 +758,11 @@ export default function Dashboard() {
       alert(`Error deleting order: ${error.message}`)
       return
     }
+    // Optimistically remove from local state immediately
     setOrders(prev => prev.filter(o => o.id !== orderId))
     setSearchResults(prev => prev.filter(o => o.id !== orderId))
+    // Re-sync from DB to prevent order reappearing on next search/reload
+    await loadData()
   }
 
   const getOrderWhatsAppPreview = (order: DashboardOrder) => {
