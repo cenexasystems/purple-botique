@@ -19,7 +19,7 @@ type CreateOrderInput = {
   couponPercentage?: number
 
   // POS additions
-  paymentMethod?: 'cash' | 'upi' | 'card' | 'split'
+  paymentMethod?: string
   splitDetails?: Record<string, unknown>
   totalGst?: number
   gstEnabled?: boolean
