@@ -36,7 +36,7 @@ import type { ProductVariant } from '../services/variantService'
 type PosItem = Product & {
   qty: number
   selectedUnit: string
-  basePrice: number
+  basePrice: number | string
   lineTotal: number
   source?: 'catalogue' | 'manual'
   note?: string | null
@@ -311,11 +311,11 @@ export default function Pos(props: PosProps = {}) {
 
   const removeItem = (id: string | number) => setItems(cur => cur.filter(i => i.id !== id))
 
-  const updateItem = (id: string | number, field: 'name' | 'basePrice', value: string | number) => {
+  const updateItem = (id: string | number, field: 'name' | 'basePrice' | 'qty', value: string | number) => {
     setItems(cur => cur.map((item) => {
       if (item.id !== id) return item
       const nextItem = { ...item, [field]: value } as PosItem
-      return field === 'basePrice' ? recalc(nextItem, nextItem.qty) : nextItem
+      return field === 'basePrice' || field === 'qty' ? recalc(nextItem, nextItem.qty) : nextItem
     }))
   }
 
@@ -832,7 +832,7 @@ export default function Pos(props: PosProps = {}) {
                   type="text"
                   value={customer.phone}
                   onChange={e => setCustomer({...customer, phone: e.target.value})}
-                  placeholder="Enter 10-digit number"
+                  placeholder="Enter WhatsApp number"
                   className="w-full h-12 px-4 bg-white border border-[#D1FAE5]/60 rounded-xl focus:outline-none focus:border-[#047857] text-[16px] md:text-[13px] font-bold text-[#111111] placeholder:text-gray-400 placeholder:font-medium"
                 />
               </div>
@@ -955,8 +955,8 @@ export default function Pos(props: PosProps = {}) {
                         <p className="text-[13px] font-black uppercase tracking-wider text-[#374151] mb-1">Price</p>
                         <input
                           type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                          value={item.basePrice || ''}
-                          onChange={e => updateItem(item.id, 'basePrice', Number(e.target.value) || 0)}
+                          value={item.basePrice === 0 ? '' : item.basePrice}
+                          onChange={e => updateItem(item.id, 'basePrice', e.target.value)}
                           placeholder="0"
                           className={`w-full h-12 px-3 border rounded-xl text-[16px] font-black text-right focus:outline-none focus:border-[#047857] ${
                             item.source === 'manual'
@@ -1016,8 +1016,8 @@ export default function Pos(props: PosProps = {}) {
                     <div>
                       <input
                         type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                        value={item.basePrice || ''}
-                        onChange={e => updateItem(item.id, 'basePrice', Number(e.target.value) || 0)}
+                        value={item.basePrice === 0 ? '' : item.basePrice}
+                        onChange={e => updateItem(item.id, 'basePrice', e.target.value)}
                         placeholder="0"
                         className={`w-full px-3 py-2 border rounded-lg text-[13px] font-black text-right focus:outline-none focus:border-[#047857] ${
                           item.source === 'manual'
@@ -1268,7 +1268,7 @@ export default function Pos(props: PosProps = {}) {
                           : 'bg-white text-[#374151] border-[#D1FAE5]/60 hover:border-[#047857]/40'
                       }`}
                     >
-                      {mode === 'qr' ? 'QR / DuitNow' : mode === 'card' ? 'Card' : 'Cash'}
+                      {mode === 'qr' ? 'QR' : mode === 'card' ? 'Card' : 'Cash'}
                     </button>
                   ))}
                 </div>

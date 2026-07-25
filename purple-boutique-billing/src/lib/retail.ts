@@ -316,10 +316,10 @@ export const normalizeSelectedQuantity = (
 // basePrice is the admin-entered price for ONE pack/unit — the exact selling price.
 // weight/volume labels (g, ml, kg, l) are display metadata only; they never enter this formula.
 export const calculateLineTotal = (
-  quantity: number,
+  quantity: number | string,
   _unitType: UnitType,
-  _baseQuantity: number,
-  basePrice: number,
+  _baseQuantity: number | string,
+  basePrice: number | string,
 ) => {
   const safeQuantity = toNumber(quantity, 0)
   const safePrice = clampTo(toNumber(basePrice, 0), 0)
