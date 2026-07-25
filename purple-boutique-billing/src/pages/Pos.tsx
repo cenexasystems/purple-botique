@@ -65,6 +65,7 @@ type InvoiceSnap = {
   amountReceived: number
   balanceReturned: number
   paymentMode: string
+  paymentMethod?: string
   invoicePdfUrl?: string
 }
 
@@ -475,6 +476,7 @@ export default function Pos(props: PosProps = {}) {
     if (orderMode === 'online' && !isSupabaseConfigured) { setError('Cannot place online orders while offline'); return }
     setSaving(true); setError('')
     try {
+      const paymentMode = orderMode === 'online' ? 'online' : cashReceivedNum > 0 ? 'cash' : 'pos'
       const created = await createOrderWithStock({
         customerName: customer.name.trim() || 'Walk-in Customer',
         phone: normalizedPhone,
@@ -507,7 +509,23 @@ export default function Pos(props: PosProps = {}) {
         couponPercentage: appliedCoupon?.percentage,
         totalGst,
         gstEnabled: billGstEnabled,
+        paymentMethod: paymentMode,
       })
+
+      // ── CRITICAL: immediately fix totals in DB, independent of PDF upload ──
+      // The RPC may store an incorrect total if items JSONB parsing differs.
+      // This guarantees the correct client-computed values are always saved.
+      await supabase.from('orders').update({
+        subtotal,
+        total,
+        total_gst: totalGst,
+        gst_amount: totalGst,
+        payment_mode: paymentMode,
+        payment_method: paymentMode,
+        discount_amount: couponDiscount,
+        manual_discount_amount: manualDiscountAmount,
+        delivery_charge: Number(shipping || 0),
+      }).eq('id', created.orderId)
       const createdInvoice: InvoiceSnap = {
         id: created.orderId,
         invoiceNo: created.invoiceNo,
@@ -529,6 +547,7 @@ export default function Pos(props: PosProps = {}) {
         amountReceived: cashReceivedNum,
         balanceReturned: balanceToReturn,
         paymentMode: orderMode === 'online' ? 'Online' : cashReceivedNum > 0 ? 'Cash' : 'POS',
+        paymentMethod: paymentMode,
       }
       setInvoice(createdInvoice)
       void persistInvoicePdf(createdInvoice)
@@ -594,13 +613,9 @@ export default function Pos(props: PosProps = {}) {
         paymentMode: inv.paymentMode,
         total: inv.total,
       })
+      // Upload PDF and save its URL — total fields already saved immediately after RPC
       const url = await uploadInvoicePdf(file, inv.invoiceNo)
-      await supabase.from('orders').update({
-        invoice_pdf_url: url,
-        payment_mode: inv.paymentMode,
-        total_gst: inv.gstAmount,
-        total: inv.total,
-      }).eq('id', inv.id)
+      await supabase.from('orders').update({ invoice_pdf_url: url }).eq('id', inv.id)
       setInvoice(current => current?.id === inv.id ? { ...current, invoicePdfUrl: url } : current)
     } catch (err) {
       console.warn('Invoice PDF could not be stored:', err)
