@@ -1336,7 +1336,7 @@ export default function Dashboard() {
       >
         {/* Desktop brand header */}
         <div className={`hidden lg:flex items-center relative transition-all duration-300 ${sidebarCollapsed ? 'flex-col items-center pt-5 pb-4 px-2 gap-3' : 'px-5 py-5 justify-between'}`}>
-          <Link to="/dashboard" title="Go to Dashboard" className={`flex items-center gap-3 min-w-0 transition-all duration-300 ${sidebarCollapsed ? 'justify-center' : 'flex-1'}`}>
+          <Link to="/pos" title="Go to Billing Panel" className={`flex items-center gap-3 min-w-0 transition-all duration-300 ${sidebarCollapsed ? 'justify-center' : 'flex-1'}`}>
             <div className="flex items-center justify-center shrink-0 w-11 h-11 rounded-xl bg-white border border-emerald-900/40 shadow-sm overflow-hidden p-1 hover:scale-105 transition-transform">
               <img src="/purple-boutique-logo.jpeg" alt="Purple Boutique logo" className="w-full h-full object-contain" />
             </div>
@@ -1356,7 +1356,7 @@ export default function Dashboard() {
         </div>
         {/* Mobile mini-header */}
         <div className="flex lg:hidden items-center justify-between px-4 py-4 border-b border-white/10">
-          <Link to="/dashboard" title="Go to Dashboard" className="flex items-center gap-3 min-w-0">
+          <Link to="/pos" title="Go to Billing Panel" className="flex items-center gap-3 min-w-0">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-emerald-900/40 shrink-0 overflow-hidden shadow-sm p-1 hover:scale-105 transition-transform">
               <img src="/purple-boutique-logo.jpeg" alt="Purple Boutique logo" className="w-full h-full object-contain" />
             </div>
