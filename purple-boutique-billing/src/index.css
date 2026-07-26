@@ -9,6 +9,7 @@
     margin: 0;
     padding: 0;
     height: 100%;
+    background-color: #064E3B;
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
     touch-action: manipulation;
@@ -20,10 +21,10 @@
     margin: 0;
     padding: 0;
     height: 100%;
-    background:
+    background-color: #064E3B;
+    background-image:
       radial-gradient(circle at top left, rgba(139, 28, 49, 0.06), transparent 34%),
-      radial-gradient(circle at top right, rgba(44, 57, 42, 0.05), transparent 28%),
-      #FBFAF6;
+      radial-gradient(circle at top right, rgba(44, 57, 42, 0.05), transparent 28%);
     color: #111111;
     /* Noto Sans Tamil listed second so Latin text uses Inter but Tamil falls
        back to the correct Tamil-capable font without reordering glyphs. */
