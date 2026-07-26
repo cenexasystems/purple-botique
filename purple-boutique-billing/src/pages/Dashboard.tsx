@@ -1325,11 +1325,11 @@ export default function Dashboard() {
   const navItems = allNavItems.filter(item => role === 'admin' || (item.id !== 'pos_analytics' && item.id !== 'coupons'))
 
   return (
-    <div className="admin-shell h-full bg-bgMain flex flex-col lg:flex-row">
+    <div className="admin-shell h-screen min-h-screen bg-bgMain flex flex-col lg:flex-row overflow-hidden">
       {/* Sidebar */}
       <aside
         className={[
-          'w-full bg-maroon-dark text-white border-b lg:border-b-0 lg:border-r border-maroon-dark flex flex-col shrink-0 lg:min-h-screen',
+          'w-full bg-maroon-dark text-white border-b lg:border-b-0 lg:border-r border-maroon-dark flex flex-col shrink-0 lg:h-full',
           'transition-[width] duration-300 ease-in-out overflow-hidden',
           sidebarCollapsed ? 'lg:w-[88px]' : 'lg:w-[260px]',
         ].join(' ')}
