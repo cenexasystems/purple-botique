@@ -265,12 +265,28 @@ export async function addAdvanceEvent(orderId: string, eventType: string, label:
   saveLocalTimeline(timeline)
 }
 
-export async function completeAdvanceOrder(orderId: string, paymentMethod: AdvancePaymentMethod, remarks = '') {
+export async function completeAdvanceOrder(
+  orderId: string, 
+  paymentMethod: AdvancePaymentMethod, 
+  finalAmount: number,
+  couponCode: string | null = null,
+  couponPercentage: number = 0,
+  manualDiscountAmount: number = 0,
+  remarks = ''
+) {
   let result: { order_id: string; invoice_no: string; completed_at: string } | null = null
 
   if (isSupabaseConfigured) {
     try {
-      const { data, error } = await supabase.rpc('complete_advance_order', { p_order_id: orderId, p_payment_method: paymentMethod, p_remarks: remarks })
+      const { data, error } = await supabase.rpc('complete_advance_order_v2', { 
+        p_order_id: orderId, 
+        p_payment_method: paymentMethod,
+        p_final_amount: finalAmount,
+        p_coupon_code: couponCode,
+        p_coupon_percentage: couponPercentage,
+        p_manual_discount: manualDiscountAmount,
+        p_remarks: remarks 
+      })
       if (!error && data) {
         const row = Array.isArray(data) ? data[0] : data
         result = row as { order_id: string; invoice_no: string; completed_at: string }

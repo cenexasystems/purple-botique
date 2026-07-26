@@ -161,7 +161,15 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
       if (appliedCoupon) parts.push(`Coupon: ${appliedCoupon.code} (-${appliedCoupon.percentage}%) = -RM${couponDiscount.toFixed(2)}`)
       if (manualDisc > 0) parts.push(`Manual Discount: ${manualDiscountType === '%' ? manualDiscountNum + '%' : 'RM' + manualDiscountNum.toFixed(2)} = -RM${manualDisc.toFixed(2)}`)
       const remarksWithCoupon = parts.filter(Boolean).join(' | ')
-      const result = await completeAdvanceOrder(paymentOrder.id, paymentForm.method, remarksWithCoupon)
+      const result = await completeAdvanceOrder(
+        paymentOrder.id, 
+        paymentForm.method, 
+        finalAmount,
+        appliedCoupon?.code || null,
+        appliedCoupon?.percentage || 0,
+        manualDisc,
+        remarksWithCoupon
+      )
       const completed: AdvanceOrder = { ...paymentOrder, status: 'completed', remaining_balance: finalAmount, completed_at: result.completed_at, completed_order_id: result.order_id, invoice_number: result.invoice_no, final_payment_method: paymentForm.method }
       setOrders(rows => rows.map(row => row.id === completed.id ? completed : row)); onOrderCompleted?.(completed); setPaymentOrder(null); setPaymentForm({ method: 'cash', remarks: '' }); setAppliedCoupon(null); setCouponInput(''); setCouponError(''); setManualDiscount(''); setManualDiscountType('rm'); setNotice(`${result.invoice_no} generated once. The full ${formatCurrency(completed.total_amount)} is now recognized as revenue.`)
 
