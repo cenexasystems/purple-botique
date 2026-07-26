@@ -287,11 +287,17 @@ export async function completeAdvanceOrder(
         p_manual_discount: manualDiscountAmount,
         p_remarks: remarks 
       })
-      if (!error && data) {
+      if (error) {
+        throw new Error(error.message || JSON.stringify(error))
+      }
+      if (data) {
         const row = Array.isArray(data) ? data[0] : data
         result = row as { order_id: string; invoice_no: string; completed_at: string }
       }
-    } catch { /* fallback */ }
+    } catch (err: any) {
+      alert(`Supabase Backend Error: ${err.message}`)
+      throw err
+    }
   }
 
   const localOrders = loadLocalOrders()
