@@ -113,7 +113,9 @@ export async function listAdvanceOrders(): Promise<AdvanceOrder[]> {
   if (isSupabaseConfigured) {
     try {
       const { data, error } = await supabase.from('advance_orders').select('*').order('created_at', { ascending: false })
-      if (!error && Array.isArray(data)) {
+      if (error) {
+        console.error('[listAdvanceOrders] Supabase error:', error.message)
+      } else if (Array.isArray(data)) {
         const remote = data.map(row => normalizeOrder(row as Record<string, unknown>))
         const remoteIds = new Set(remote.map(r => r.id))
         const localOnly = local.filter(l => !remoteIds.has(l.id))
@@ -121,7 +123,7 @@ export async function listAdvanceOrders(): Promise<AdvanceOrder[]> {
         saveLocalOrders(merged)
         return merged
       }
-    } catch { /* fallback */ }
+    } catch (err) { console.error('[listAdvanceOrders] Exception:', err) }
   }
   return local
 }
@@ -159,10 +161,12 @@ export async function createAdvanceOrder(input: {
         p_deposit_amount: input.depositAmount, p_expected_delivery_date: input.expectedDeliveryDate, p_remarks: input.remarks,
         p_payment_method: input.paymentMethod, p_created_by_name: input.createdByName, p_products: input.products || [],
       })
-      if (!error && data) {
+      if (error) {
+        console.error('[createAdvanceOrder] Supabase error:', error.message)
+      } else if (data) {
         createdOrder = normalizeOrder(rpcRow(data))
       }
-    } catch { /* fallback */ }
+    } catch (err) { console.error('[createAdvanceOrder] Exception:', err) }
   }
 
   if (!createdOrder) {
@@ -229,10 +233,12 @@ export async function updateAdvanceStatus(orderId: string, status: AdvanceStatus
   if (isSupabaseConfigured) {
     try {
       const { data, error } = await supabase.rpc('update_advance_order_status', { p_order_id: orderId, p_status: status, p_remarks: remarks })
-      if (!error && data) {
+      if (error) {
+        console.error('[updateAdvanceStatus] Supabase error:', error.message)
+      } else if (data) {
         updatedOrder = normalizeOrder(rpcRow(data))
       }
-    } catch { /* fallback */ }
+    } catch (err) { console.error('[updateAdvanceStatus] Exception:', err) }
   }
 
   const localOrders = loadLocalOrders()
