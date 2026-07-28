@@ -773,6 +773,8 @@ export default function Dashboard() {
     } else {
       if (!window.confirm(`Are you sure you want to completely delete order ${invoiceNo}? This cannot be undone.`)) return
     }
+    // Clear FK reference in advance_orders first (if this order was created from an advance order)
+    await supabase.from('advance_orders').update({ completed_order_id: null }).eq('completed_order_id', orderId)
     const { error } = await supabase.from('orders').delete().eq('id', orderId)
     if (error) {
       alert(`Error deleting order: ${error.message}`)

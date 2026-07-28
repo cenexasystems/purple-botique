@@ -306,7 +306,7 @@ export async function completeAdvanceOrder(
 
   if (!result) {
     const seq = String(Math.floor(10000000 + Math.random() * 89999999))
-    const invoiceNo = seq
+    const invoiceNo = `INV${seq}`
     const completedOrderId = crypto.randomUUID ? crypto.randomUUID() : `ord_${Date.now()}_${Math.random().toString(36).slice(2)}`
     result = { order_id: completedOrderId, invoice_no: invoiceNo, completed_at: now }
   }
