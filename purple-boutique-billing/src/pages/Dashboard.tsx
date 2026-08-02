@@ -1832,11 +1832,11 @@ export default function Dashboard() {
                                       <div><span className="font-black text-[#374151]">{l('Name', 'பெயர்')}: </span><span className="font-bold text-[#111111]">{order.customer_name || '-'}</span></div>
                                       <div><span className="font-black text-[#374151]">{l('Phone', 'தொலைபேசி')}: </span><span className="font-bold text-[#111111]">{order.phone || '-'}</span></div>
                                       <div className="flex-1"><span className="font-black text-[#374151]">{l('Address', 'முகவரி')}: </span><span className="text-[#111111]">{order.address || '-'}</span></div>
-                                      {order.split_details?.remarks && (
-                                        <div className="w-full mt-1 border-t border-blue-50 pt-2"><span className="font-black text-[#374151]">Remarks: </span><span className="font-bold text-[#111111]">{String(order.split_details.remarks)}</span></div>
+                                      {Boolean(order.split_details?.remarks) && (
+                                        <div className="w-full mt-1 border-t border-blue-50 pt-2"><span className="font-black text-[#374151]">Remarks: </span><span className="font-bold text-[#111111]">{String(order.split_details?.remarks || '')}</span></div>
                                       )}
-                                      {order.split_details?.referenceNumber && (
-                                        <div className="w-full mt-1 border-t border-blue-50 pt-2"><span className="font-black text-[#374151]">Ref Number: </span><span className="font-bold text-[#111111]">{String(order.split_details.referenceNumber)}</span></div>
+                                      {Boolean(order.split_details?.referenceNumber) && (
+                                        <div className="w-full mt-1 border-t border-blue-50 pt-2"><span className="font-black text-[#374151]">Ref Number: </span><span className="font-bold text-[#111111]">{String(order.split_details?.referenceNumber || '')}</span></div>
                                       )}
                                     </div>
 
