@@ -118,6 +118,9 @@ export default function Pos(props: PosProps = {}) {
   const [activeCategory, setActiveCategory] = useState('All')
   const [items, setItems] = useState<PosItem[]>([])
   const [customer, setCustomer] = useState({ name: '', phone: '', address: '' })
+  const [remarks, setRemarks] = useState('')
+  const [referenceNumber, setReferenceNumber] = useState('')
+  const [paymentType, setPaymentType] = useState<'cash' | 'qr' | 'card'>('cash')
   const [saving, setSaving] = useState(false)
   const [shipping, setShipping] = useState<string>('0')
   const [couponInput, setCouponInput] = useState('')
@@ -130,7 +133,6 @@ export default function Pos(props: PosProps = {}) {
   const [error, setError] = useState('')
   const [invoice, setInvoice] = useState<InvoiceSnap | null>(null)
   const [cashReceived, setCashReceived] = useState<string>('')
-  const [paymentType, setPaymentType] = useState<'cash' | 'qr' | 'card'>('cash')
   const [mobilePanelView, setMobilePanelView] = useState<'catalogue' | 'bill'>('catalogue')
   const [orderMode, setOrderMode] = useState<'online' | 'offline'>('offline')
   const [variantPickerProduct, setVariantPickerProduct] = useState<Product | null>(null)
@@ -347,6 +349,8 @@ export default function Pos(props: PosProps = {}) {
     setManualDiscountType('flat')
     setError('')
     setShipping('0')
+    setRemarks('')
+    setReferenceNumber('')
     setBillGstEnabled(false)
     setGstInput('')
     setGstType('percent')
@@ -512,6 +516,10 @@ export default function Pos(props: PosProps = {}) {
         totalGst,
         gstEnabled: billGstEnabled,
         paymentMethod: paymentMode,
+        splitDetails: {
+          remarks: remarks.trim(),
+          referenceNumber: referenceNumber.trim()
+        }
       })
 
       // ── CRITICAL: immediately fix totals in DB, independent of PDF upload ──
@@ -527,6 +535,10 @@ export default function Pos(props: PosProps = {}) {
         discount_amount: couponDiscount,
         manual_discount_amount: manualDiscountAmount,
         delivery_charge: Number(shipping || 0),
+        split_details: {
+          remarks: remarks.trim(),
+          referenceNumber: referenceNumber.trim()
+        }
       }).eq('id', created.orderId)
       const createdInvoice: InvoiceSnap = {
         id: created.orderId,
@@ -783,14 +795,12 @@ export default function Pos(props: PosProps = {}) {
           </div>
           {!embeddedMode && (
             <>
-              {role === 'admin' && (
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  className="flex items-center justify-center min-h-[44px] px-4 rounded-xl bg-[#111111] text-white hover:bg-[#3d4f3a] transition-colors text-[12px] font-black tracking-wider uppercase"
-                >
-                  Dashboard
-                </button>
-              )}
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center justify-center min-h-[44px] px-4 rounded-xl bg-[#111111] text-white hover:bg-[#3d4f3a] transition-colors text-[12px] font-black tracking-wider uppercase"
+              >
+                Dashboard
+              </button>
               <button
                 onClick={() => { logout(); navigate('/admin-login', { replace: true }) }}
                 title="Logout"
@@ -833,6 +843,26 @@ export default function Pos(props: PosProps = {}) {
                   value={customer.phone}
                   onChange={e => setCustomer({...customer, phone: e.target.value})}
                   placeholder="Enter WhatsApp number"
+                  className="w-full h-12 px-4 bg-white border border-[#D1FAE5]/60 rounded-xl focus:outline-none focus:border-[#047857] text-[16px] md:text-[13px] font-bold text-[#111111] placeholder:text-gray-400 placeholder:font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-[13px] md:text-[10px] font-black text-[#374151] tracking-wider uppercase mb-1.5">Remarks (Internal)</label>
+                <input
+                  type="text"
+                  value={remarks}
+                  onChange={e => setRemarks(e.target.value)}
+                  placeholder="Optional remarks"
+                  className="w-full h-12 px-4 bg-white border border-[#D1FAE5]/60 rounded-xl focus:outline-none focus:border-[#047857] text-[16px] md:text-[13px] font-bold text-[#111111] placeholder:text-gray-400 placeholder:font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-[13px] md:text-[10px] font-black text-[#374151] tracking-wider uppercase mb-1.5">Reference Number</label>
+                <input
+                  type="text"
+                  value={referenceNumber}
+                  onChange={e => setReferenceNumber(e.target.value)}
+                  placeholder="Optional ref no."
                   className="w-full h-12 px-4 bg-white border border-[#D1FAE5]/60 rounded-xl focus:outline-none focus:border-[#047857] text-[16px] md:text-[13px] font-bold text-[#111111] placeholder:text-gray-400 placeholder:font-medium"
                 />
               </div>

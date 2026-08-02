@@ -66,7 +66,7 @@ type DashboardOrder = {
   id: string; invoice_no: string; customer_name: string; phone: string; address: string
   created_at: string; total: number; status: string; order_mode: string; order_type: string; user_id: string | null; items: unknown
   coupon_code: string; discount_amount: number; manual_discount_amount: number; delivery_charge: number
-  total_gst: number; payment_mode: string; payment_method?: string; invoice_pdf_url: string
+  total_gst: number; payment_mode: string; payment_method?: string; invoice_pdf_url: string; split_details?: Record<string, unknown>
 }
 type DashboardOrderItem = { order_id: string; product_name: string; category?: string; quantity: number; line_total: number; is_manual?: boolean | null }
 type DashboardCoupon = {
@@ -270,6 +270,7 @@ export default function Dashboard() {
     total_gst: toNumber(row.total_gst ?? row.gst_amount, 0),
     payment_mode: String(row.payment_mode || row.payment_method || ''),
     invoice_pdf_url: String(row.invoice_pdf_url || ''),
+    split_details: (row.split_details as Record<string, unknown>) || {},
   })
 
   const handleAdvanceOrderCompleted = useCallback((advance: AdvanceOrder) => {
@@ -679,7 +680,7 @@ export default function Dashboard() {
       const [cRes, oRes, couponRes] = await Promise.all([
         supabase.from('categories').select('id, name_en, name_ta, is_active, sort_order').order('sort_order'),
         supabase.from('orders')
-          .select('id, invoice_no, customer_name, phone, address, created_at, total, status, order_mode, order_type, user_id, items, coupon_code, discount_amount, manual_discount_amount, delivery_charge, total_gst, gst_amount, payment_mode, payment_method, invoice_pdf_url')
+          .select('id, invoice_no, customer_name, phone, address, created_at, total, status, order_mode, order_type, user_id, items, coupon_code, discount_amount, manual_discount_amount, delivery_charge, total_gst, gst_amount, payment_mode, payment_method, invoice_pdf_url, split_details')
           .order('created_at', { ascending: false })
           .limit(1000),
         supabase.from('coupons')
@@ -1283,12 +1284,51 @@ export default function Dashboard() {
   }
 
   const toggleCat = async (c: Category) => {
-    await supabase.from('categories').update({ is_active: !c.is_active }).eq('id', c.id); await loadData()
+    // Optimistic update
+    setCats(prev => prev.map(cat => cat.id === c.id ? { ...cat, is_active: !c.is_active } : cat))
+    const { error } = await supabase.from('categories').update({ is_active: !c.is_active }).eq('id', c.id)
+    if (error) {
+      setCategoryNotice({ type: 'error', text: 'Failed to update category status.' })
+      // Revert on error
+      setCats(prev => prev.map(cat => cat.id === c.id ? { ...cat, is_active: c.is_active } : cat))
+    }
   }
 
   const moveCat = async (c: Category, dir: 'up' | 'down') => {
-    const next = dir === 'up' ? Math.max(0, toNumber(c.sort_order, 0) - 1) : toNumber(c.sort_order, 0) + 1
-    await supabase.from('categories').update({ sort_order: next }).eq('id', c.id); await loadData()
+    const currentIndex = cats.findIndex(cat => cat.id === c.id)
+    if (dir === 'up' && currentIndex > 0) {
+      const prevCat = cats[currentIndex - 1]
+      const normalizedCats = cats.map((cat, i) => ({ ...cat, sort_order: i * 10 }))
+      const currentNormalized = normalizedCats[currentIndex]
+      const prevNormalized = normalizedCats[currentIndex - 1]
+      
+      const temp = currentNormalized.sort_order
+      currentNormalized.sort_order = prevNormalized.sort_order
+      prevNormalized.sort_order = temp
+      
+      setCats(normalizedCats.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)))
+      
+      await Promise.all([
+        supabase.from('categories').update({ sort_order: currentNormalized.sort_order }).eq('id', c.id),
+        supabase.from('categories').update({ sort_order: prevNormalized.sort_order }).eq('id', prevCat.id)
+      ])
+    } else if (dir === 'down' && currentIndex < cats.length - 1) {
+      const nextCat = cats[currentIndex + 1]
+      const normalizedCats = cats.map((cat, i) => ({ ...cat, sort_order: i * 10 }))
+      const currentNormalized = normalizedCats[currentIndex]
+      const nextNormalized = normalizedCats[currentIndex + 1]
+      
+      const temp = currentNormalized.sort_order
+      currentNormalized.sort_order = nextNormalized.sort_order
+      nextNormalized.sort_order = temp
+      
+      setCats(normalizedCats.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)))
+      
+      await Promise.all([
+        supabase.from('categories').update({ sort_order: currentNormalized.sort_order }).eq('id', c.id),
+        supabase.from('categories').update({ sort_order: nextNormalized.sort_order }).eq('id', nextCat.id)
+      ])
+    }
   }
 
   useEffect(() => {
@@ -1790,9 +1830,14 @@ export default function Dashboard() {
                                     {/* Customer info bar */}
                                     <div className="flex flex-wrap gap-4 text-[12px] bg-white rounded-xl p-3 border border-blue-100">
                                       <div><span className="font-black text-[#374151]">{l('Name', 'பெயர்')}: </span><span className="font-bold text-[#111111]">{order.customer_name || '-'}</span></div>
-                                      <div><span className="font-black text-[#374151]">{l('Name', 'பெயர்')}: </span><span className="font-bold text-[#111111]">{order.customer_name || '-'}</span></div>
                                       <div><span className="font-black text-[#374151]">{l('Phone', 'தொலைபேசி')}: </span><span className="font-bold text-[#111111]">{order.phone || '-'}</span></div>
                                       <div className="flex-1"><span className="font-black text-[#374151]">{l('Address', 'முகவரி')}: </span><span className="text-[#111111]">{order.address || '-'}</span></div>
+                                      {order.split_details?.remarks && (
+                                        <div className="w-full mt-1 border-t border-blue-50 pt-2"><span className="font-black text-[#374151]">Remarks: </span><span className="font-bold text-[#111111]">{String(order.split_details.remarks)}</span></div>
+                                      )}
+                                      {order.split_details?.referenceNumber && (
+                                        <div className="w-full mt-1 border-t border-blue-50 pt-2"><span className="font-black text-[#374151]">Ref Number: </span><span className="font-bold text-[#111111]">{String(order.split_details.referenceNumber)}</span></div>
+                                      )}
                                     </div>
 
                                     {/* Items table */}
