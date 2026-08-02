@@ -146,6 +146,7 @@ export default function Pos(props: PosProps = {}) {
   const [depositOpen, setDepositOpen] = useState(false)
   const [depositCreated, setDepositCreated] = useState<AdvanceOrder | null>(null)
   const [depositForm, setDepositForm] = useState({ amount: '', expectedDeliveryDate: '', paymentMethod: 'cash' as AdvancePaymentMethod, address: '', remarks: '' })
+  const [dbCategories, setDbCategories] = useState<string[]>([])
   const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -162,15 +163,24 @@ export default function Pos(props: PosProps = {}) {
     const productChannel = supabase.channel('pos-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => void fetchProducts())
       .subscribe()
+
+    // Load active categories in sort_order
+    supabase.from('categories').select('name_en').eq('is_active', true).order('sort_order')
+      .then(({ data }) => {
+        if (data) setDbCategories(data.map(c => c.name_en as string))
+      })
+
     return () => { void supabase.removeChannel(productChannel) }
   }, [fetchProducts, fetchVariants])
 
   // ── Derived data ──────────────────────────────────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const categories = useMemo(() => {
+    // Use DB active categories in sort_order; fall back to product categories if DB returns nothing
+    if (dbCategories.length > 0) return ['All', ...dbCategories]
     const cats = Array.from(new Set(products.filter(p => p.isActive).map(p => p.category))).filter(Boolean)
     return ['All', ...cats]
-  }, [products])
+  }, [dbCategories, products])
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const filtered = useMemo(() => {

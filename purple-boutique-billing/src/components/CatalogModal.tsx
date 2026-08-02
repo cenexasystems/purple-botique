@@ -9,7 +9,7 @@ interface CatalogModalProps {
   onAdd: (product: Product) => void
 }
 
-type CategoryOption = { id: string | number; name_en: string }
+type CategoryOption = { id: string | number; name_en: string; is_active?: boolean; sort_order?: number }
 
 export default function CatalogModal({ isOpen, onClose, onAdd }: CatalogModalProps) {
   const { fetchProducts, products, loading, error } = useProductStore()
@@ -29,7 +29,10 @@ export default function CatalogModal({ isOpen, onClose, onAdd }: CatalogModalPro
     if (!isOpen) return
     let cancelled = false
     const loadCategories = async () => {
-      const { data } = await supabase.from('categories').select('id, name_en')
+      const { data } = await supabase
+        .from('categories')
+        .select('id, name_en, is_active, sort_order')
+        .order('sort_order')
       if (!cancelled) setCategoryOptions((data || []) as CategoryOption[])
     }
     void loadCategories()
@@ -37,12 +40,13 @@ export default function CatalogModal({ isOpen, onClose, onAdd }: CatalogModalPro
   }, [isOpen])
 
   const categories = useMemo(() => {
-    const cats = Array.from(new Set([
-      ...categoryOptions.map(category => category.name_en.trim()),
-      ...products.filter(p => p.isActive).map(p => p.category.trim()),
-    ])).filter(Boolean).sort((a, b) => a.localeCompare(b))
-    return ['All', ...cats]
-  }, [categoryOptions, products])
+    // Only show active categories, in dashboard sort_order
+    const activeCats = categoryOptions
+      .filter(c => c.is_active !== false)
+      .map(c => c.name_en.trim())
+      .filter(Boolean)
+    return ['All', ...activeCats]
+  }, [categoryOptions])
 
   const allCategoryOptions = useMemo(() => {
     const merged = new Map<string, CategoryOption>()
