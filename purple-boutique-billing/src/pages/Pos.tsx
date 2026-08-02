@@ -516,10 +516,8 @@ export default function Pos(props: PosProps = {}) {
         totalGst,
         gstEnabled: billGstEnabled,
         paymentMethod: paymentMode,
-        splitDetails: {
-          remarks: remarks.trim(),
-          referenceNumber: referenceNumber.trim()
-        }
+        remarks: remarks.trim(),
+        referenceNumber: referenceNumber.trim()
       })
 
       // ── CRITICAL: immediately fix totals in DB, independent of PDF upload ──
@@ -535,10 +533,8 @@ export default function Pos(props: PosProps = {}) {
         discount_amount: couponDiscount,
         manual_discount_amount: manualDiscountAmount,
         delivery_charge: Number(shipping || 0),
-        split_details: {
-          remarks: remarks.trim(),
-          referenceNumber: referenceNumber.trim()
-        }
+        remarks: remarks.trim(),
+        reference_number: referenceNumber.trim()
       }).eq('id', created.orderId)
       const createdInvoice: InvoiceSnap = {
         id: created.orderId,
