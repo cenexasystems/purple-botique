@@ -203,6 +203,9 @@ export default function Dashboard() {
   // WA detail expansion
   const [waExpandedId, setWaExpandedId] = useState<string | null>(null)
 
+  // Order history row expansion (remarks / ref no)
+  const [historyExpandedId, setHistoryExpandedId] = useState<string | null>(null)
+
   // Search & date filter
   const [search, setSearch] = useState({ invoiceNo: '', phone: '', customerName: '', dateFrom: '', dateTo: '' })
   const [todayBillsSearch, setTodayBillsSearch] = useState('')
@@ -2736,6 +2739,18 @@ export default function Dashboard() {
                           <p className="text-[#9BAB9A] uppercase text-[11px] font-black">Delivery</p>
                           <p className="font-semibold text-[#111111]">{o.delivery_charge > 0 ? formatCurrency(o.delivery_charge) : '—'}</p>
                         </div>
+                        {((o as unknown as Record<string,unknown>).reference_number as string) && (
+                          <div>
+                            <p className="text-[#9BAB9A] uppercase text-[11px] font-black">Ref #</p>
+                            <p className="font-semibold text-[#111111] break-words">{(o as unknown as Record<string,unknown>).reference_number as string}</p>
+                          </div>
+                        )}
+                        {((o as unknown as Record<string,unknown>).remarks as string) && (
+                          <div className="col-span-2">
+                            <p className="text-[#9BAB9A] uppercase text-[11px] font-black">Remarks</p>
+                            <p className="font-semibold text-[#374151] break-words">{(o as unknown as Record<string,unknown>).remarks as string}</p>
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2 pt-1">
                         <div className="flex gap-2 w-full sm:flex-1">
@@ -2768,7 +2783,7 @@ export default function Dashboard() {
                 <table className="w-full text-left text-[13px]">
                   <thead className="bg-[#F9FAFB] text-[10px] uppercase tracking-wider text-[#374151]">
                     <tr>
-                      {['Invoice No', 'Customer Name', 'Phone', 'Bill Type', 'Coupon', 'Discount', 'Delivery', 'Total', 'Date', 'Status', 'Actions'].map(h => (
+                      {['Invoice No', 'Customer Name', 'Phone', 'Bill Type', 'Coupon', 'Discount', 'Delivery', 'Total', 'Date', 'Status', 'Actions', 'Details'].map(h => (
                         <th key={h} className="px-2 py-3 font-black text-center">{h}</th>
                       ))}
                     </tr>
@@ -2817,12 +2832,49 @@ export default function Dashboard() {
                               </button>
                             </div>
                           </td>
+                          <td className="px-2 py-3 text-center">
+                            <button
+                              onClick={() => setHistoryExpandedId(historyExpandedId === o.id ? null : o.id)}
+                              className={`rounded-lg p-1 transition-colors ${
+                                historyExpandedId === o.id
+                                  ? 'bg-[#111111] text-white'
+                                  : 'text-[#374151] hover:bg-[#F9FAFB]'
+                              }`}
+                              title="View Details"
+                            >
+                              <ChevronDown size={13} className={`transition-transform ${historyExpandedId === o.id ? 'rotate-180' : ''}`} />
+                            </button>
+                          </td>
                         </tr>
+                        {historyExpandedId === o.id && (
+                          <tr className="bg-[#F9FAFB] border-b border-[#D1FAE5]/40">
+                            <td colSpan={12} className="px-4 py-4">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[12px]">
+                                <div>
+                                  <p className="text-[10px] font-black uppercase text-[#9BAB9A] tracking-wider mb-1">Reference No</p>
+                                  <p className="font-semibold text-[#111111]">{(o as unknown as Record<string,unknown>).reference_number as string || '—'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-black uppercase text-[#9BAB9A] tracking-wider mb-1">Remarks</p>
+                                  <p className="font-semibold text-[#374151] break-words">{(o as unknown as Record<string,unknown>).remarks as string || '—'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-black uppercase text-[#9BAB9A] tracking-wider mb-1">Customer</p>
+                                  <p className="font-semibold text-[#111111]">{o.customer_name}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-black uppercase text-[#9BAB9A] tracking-wider mb-1">Address</p>
+                                  <p className="font-semibold text-[#374151] break-words">{o.address || '—'}</p>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
                         </React.Fragment>
                       )
                     })}
                     {filteredSearchResults.length === 0 && (
-                      <tr><td colSpan={11} className="px-4 py-8 text-center text-[#374151]">{l('No matching bills', 'பில்கள் இல்லை')}</td></tr>
+                      <tr><td colSpan={12} className="px-4 py-8 text-center text-[#374151]">{l('No matching bills', 'பில்கள் இல்லை')}</td></tr>
                     )}
                   </tbody>
                 </table>
