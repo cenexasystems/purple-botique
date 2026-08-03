@@ -19,6 +19,7 @@ export type AdvanceOrder = {
   expected_delivery_date: string
   status: AdvanceStatus
   remarks: string
+  reference_number: string
   created_by_name: string
   created_at: string
   updated_at: string
@@ -97,6 +98,7 @@ const normalizeOrder = (row: Record<string, unknown>): AdvanceOrder => ({
   expected_delivery_date: String(row.expected_delivery_date || ''),
   status: String(row.status || 'pending_deposit') as AdvanceStatus,
   remarks: String(row.remarks || ''),
+  reference_number: String(row.reference_number || ''),
   created_by_name: String(row.created_by_name || ''),
   created_at: String(row.created_at || new Date().toISOString()),
   updated_at: String(row.updated_at || new Date().toISOString()),
@@ -148,7 +150,7 @@ export async function getAdvanceOrderHistory(orderId: string) {
 
 export async function createAdvanceOrder(input: {
   customerName: string; phone: string; address: string; productName: string; category: string; description: string
-  totalAmount: number; depositAmount: number; expectedDeliveryDate: string; remarks: string
+  totalAmount: number; depositAmount: number; expectedDeliveryDate: string; remarks: string; referenceNumber: string
   paymentMethod: AdvancePaymentMethod; createdByName: string; products?: Array<Record<string, unknown>>
 }): Promise<AdvanceOrder> {
   let createdOrder: AdvanceOrder | null = null
@@ -165,6 +167,11 @@ export async function createAdvanceOrder(input: {
         console.error('[createAdvanceOrder] Supabase error:', error.message)
       } else if (data) {
         createdOrder = normalizeOrder(rpcRow(data))
+        // Patch reference_number (not in RPC params)
+        if (input.referenceNumber.trim()) {
+          await supabase.from('advance_orders').update({ reference_number: input.referenceNumber.trim() }).eq('id', createdOrder.id)
+          createdOrder.reference_number = input.referenceNumber.trim()
+        }
       }
     } catch (err) { console.error('[createAdvanceOrder] Exception:', err) }
   }
@@ -192,6 +199,7 @@ export async function createAdvanceOrder(input: {
       expected_delivery_date: input.expectedDeliveryDate,
       status: 'pending_deposit',
       remarks: input.remarks.trim(),
+      reference_number: input.referenceNumber.trim(),
       created_by_name: input.createdByName,
       created_at: now.toISOString(),
       updated_at: now.toISOString(),
