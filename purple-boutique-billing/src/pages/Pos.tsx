@@ -145,7 +145,7 @@ export default function Pos(props: PosProps = {}) {
   const [addProductOpen, setAddProductOpen] = useState(false)
   const [depositOpen, setDepositOpen] = useState(false)
   const [depositCreated, setDepositCreated] = useState<AdvanceOrder | null>(null)
-  const [depositForm, setDepositForm] = useState({ amount: '', expectedDeliveryDate: '', paymentMethod: 'cash' as AdvancePaymentMethod, address: '', remarks: '' })
+  const [depositForm, setDepositForm] = useState({ amount: '', expectedDeliveryDate: '', paymentMethod: 'cash' as AdvancePaymentMethod, address: '', remarks: '', referenceNumber: '' })
   const [dbCategories, setDbCategories] = useState<string[]>([])
   const searchRef = useRef<HTMLInputElement>(null)
 
@@ -433,7 +433,7 @@ export default function Pos(props: PosProps = {}) {
     if (total <= 0) { setError('The order total must be greater than zero.'); return }
     const enteredAmount = Number(cashReceived) || 0
     const suggestedDeposit = enteredAmount > 0 && enteredAmount < total ? String(enteredAmount) : ''
-    setDepositForm({ amount: suggestedDeposit, expectedDeliveryDate: '', paymentMethod: 'cash', address: customer.address, remarks: '' })
+    setDepositForm({ amount: suggestedDeposit, expectedDeliveryDate: '', paymentMethod: 'cash', address: customer.address || '', remarks: '', referenceNumber: '' })
     setError('')
     setDepositOpen(true)
   }
@@ -466,7 +466,7 @@ export default function Pos(props: PosProps = {}) {
         category: Array.from(new Set(items.map(item => item.category).filter(Boolean))).join(', '),
         description: items.map(item => `${item.qty}× ${item.name}${item.note ? ` — ${item.note}` : ''}`).join('\n'),
         totalAmount: total, depositAmount, expectedDeliveryDate: depositForm.expectedDeliveryDate,
-        remarks: depositForm.remarks, paymentMethod: depositForm.paymentMethod, createdByName: role || 'Staff',
+        remarks: depositForm.remarks, referenceNumber: depositForm.referenceNumber, paymentMethod: depositForm.paymentMethod, createdByName: role || 'Staff',
         products: productsSnapshot,
       })
       setDepositCreated(created)
@@ -1387,6 +1387,7 @@ export default function Pos(props: PosProps = {}) {
               <label className="block"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Expected delivery *</span><input required type="date" value={depositForm.expectedDeliveryDate} onChange={e => setDepositForm({...depositForm, expectedDeliveryDate:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none focus:border-violet-600"/></label>
               <label className="block"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Payment method *</span><select value={depositForm.paymentMethod} onChange={e => setDepositForm({...depositForm,paymentMethod:e.target.value as AdvancePaymentMethod})} className="w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none focus:border-violet-600"><option value="cash">Cash</option><option value="upi">QR</option><option value="card">Card</option></select></label>
               <label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Delivery address</span><textarea value={depositForm.address} onChange={e => setDepositForm({...depositForm,address:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-violet-600" rows={2}/></label>
+              <label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Reference Number</span><input value={depositForm.referenceNumber} onChange={e => setDepositForm({...depositForm,referenceNumber:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-violet-600" placeholder="e.g. PO-001, booking ref (optional)"/></label>
               <label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Remarks</span><textarea value={depositForm.remarks} onChange={e => setDepositForm({...depositForm,remarks:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-violet-600" rows={2}/></label>
             </div>
             {error && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-600">{error}</div>}
