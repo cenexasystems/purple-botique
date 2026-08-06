@@ -207,7 +207,7 @@ export default function Dashboard() {
   const [historyExpandedId, setHistoryExpandedId] = useState<string | null>(null)
 
   // Search & date filter
-  const [search, setSearch] = useState({ invoiceNo: '', phone: '', customerName: '', dateFrom: '', dateTo: '' })
+  const [search, setSearch] = useState({ invoiceNo: '', phone: '', customerName: '', referenceNumber: '', dateFrom: '', dateTo: '' })
   const [todayBillsSearch, setTodayBillsSearch] = useState('')
   const [productAnalyticsSearch, setProductAnalyticsSearch] = useState('')
   const [datePreset, setDatePreset] = useState<'today' | 'week' | 'month' | 'custom' | ''>('')
@@ -1045,13 +1045,14 @@ export default function Dashboard() {
     setSearchLoading(true)
     try {
       let q = supabase.from('orders')
-        .select('id, invoice_no, customer_name, phone, address, created_at, total, status, order_mode, order_type, items, coupon_code, discount_amount, delivery_charge')
+        .select('id, invoice_no, customer_name, phone, address, created_at, total, status, order_mode, order_type, items, coupon_code, discount_amount, delivery_charge, reference_number')
         .neq('order_type', 'online_request')
         .order('created_at', { ascending: false })
         .limit(500)
-      if (search.invoiceNo.trim())    q = q.ilike('invoice_no', `%${search.invoiceNo.trim()}%`)
-      if (search.phone.trim())        q = q.ilike('phone', `%${search.phone.trim()}%`)
-      if (search.customerName.trim()) q = q.ilike('customer_name', `%${search.customerName.trim()}%`)
+      if (search.invoiceNo.trim())       q = q.ilike('invoice_no', `%${search.invoiceNo.trim()}%`)
+      if (search.phone.trim())            q = q.ilike('phone', `%${search.phone.trim()}%`)
+      if (search.customerName.trim())     q = q.ilike('customer_name', `%${search.customerName.trim()}%`)
+      if (search.referenceNumber.trim())  q = q.ilike('reference_number', `%${search.referenceNumber.trim()}%`)
       if (search.dateFrom)        q = q.gte('created_at', `${search.dateFrom}T00:00:00`)
       if (search.dateTo)          q = q.lte('created_at', `${search.dateTo}T23:59:59`)
       if (billTypeFilter === 'manual')  q = q.eq('order_type', 'manual_sale')
@@ -2671,6 +2672,8 @@ export default function Dashboard() {
                     value={search.customerName} onChange={e => setSearch(s => ({ ...s, customerName: e.target.value }))} />
                   <input className="min-h-[48px] rounded-xl bg-[#F9FAFB] px-3 py-2.5 text-[16px] md:text-[13px] font-semibold text-[#111111] placeholder:text-[#8A9384] focus:outline-none focus:ring-2 focus:ring-[#047857]/15" placeholder={l('Mobile Number', 'மொபைல் எண்')}
                     value={search.phone} onChange={e => setSearch(s => ({ ...s, phone: e.target.value }))} />
+                  <input className="min-h-[48px] rounded-xl bg-[#F9FAFB] px-3 py-2.5 text-[16px] md:text-[13px] font-semibold text-[#111111] placeholder:text-[#8A9384] focus:outline-none focus:ring-2 focus:ring-[#047857]/15" placeholder={l('Reference Number', 'குறிப்பு எண்')}
+                    value={search.referenceNumber} onChange={e => setSearch(s => ({ ...s, referenceNumber: e.target.value }))} />
                   {datePreset === 'custom' ? (
                     <>
                       <input type="date" className="min-h-[48px] rounded-xl bg-[#F9FAFB] px-3 py-2.5 text-[16px] md:text-[13px] font-semibold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#047857]/15"
