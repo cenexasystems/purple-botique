@@ -208,24 +208,28 @@ export default function CatalogModal({ isOpen, onClose, onAdd }: CatalogModalPro
                   {filtered.map(product => (
                     <div key={product.id}
                       className="bg-white border border-[#D1FAE5]/60 rounded-2xl p-3 flex flex-col gap-2 hover:border-[#047857]/40 hover:shadow-md transition-all group relative">
-                      <div className="absolute top-2 right-2 flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10">
-                        <button onClick={(e) => { e.stopPropagation(); startEdit(product) }} title="Edit product"
-                          className="p-1.5 rounded-lg bg-white border border-[#D1FAE5]/60 text-[#374151] hover:text-[#047857] hover:border-[#047857]/40 shadow-sm transition-colors">
-                          <Edit2 size={14} />
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); void handleDelete(product) }} title="Delete product"
-                          className="p-1.5 rounded-lg bg-white border border-[#D1FAE5]/60 text-red-400 hover:text-red-600 hover:border-red-300 shadow-sm transition-colors">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
                       <div onClick={() => onAdd(product)} className="cursor-pointer flex-1">
-                        <h4 className="text-[13px] font-black text-[#111111] leading-tight group-hover:text-[#047857] transition-colors">{product.name}</h4>
-                        {product.nameTa && <p className="text-[10px] font-bold text-[#374151] mt-0.5">{product.nameTa}</p>}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-[13px] font-black text-[#111111] leading-tight group-hover:text-[#047857] transition-colors break-words">{product.name}</h4>
+                            {product.nameTa && <p className="text-[10px] font-bold text-[#374151] mt-0.5 truncate">{product.nameTa}</p>}
+                          </div>
+                          <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                            <button onClick={(e) => { e.stopPropagation(); startEdit(product) }} title="Edit product"
+                              className="p-1.5 rounded-lg bg-white border border-[#D1FAE5]/60 text-[#374151] hover:text-[#047857] hover:border-[#047857]/40 shadow-sm transition-colors">
+                              <Edit2 size={14} />
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); void handleDelete(product) }} title="Delete product"
+                              className="p-1.5 rounded-lg bg-white border border-[#D1FAE5]/60 text-red-400 hover:text-red-600 hover:border-red-300 shadow-sm transition-colors">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
                       </div>
                       <div onClick={() => onAdd(product)} className="cursor-pointer">
                         <div className="flex items-end justify-between mt-2 pt-2 border-t border-[#D1FAE5]/30">
                           <span className="text-[14px] font-black text-[#111111]">RM{product.price}</span>
-                          <span className="text-[9px] font-black text-[#374151] uppercase tracking-wider bg-[#F9FAFB] px-2 py-1 rounded border border-[#D1FAE5]/40">{product.category}</span>
+                          <span className="text-[9px] font-black text-[#374151] uppercase tracking-wider bg-[#F9FAFB] px-2 py-1 rounded border border-[#D1FAE5]/40 truncate max-w-[50%]">{product.category}</span>
                         </div>
                       </div>
                     </div>
