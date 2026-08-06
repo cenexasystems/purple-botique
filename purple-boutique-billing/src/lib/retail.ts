@@ -77,6 +77,14 @@ export const isUuid = (value: unknown): value is string =>
 export const formatInvoiceNo = (invNo: unknown): string => {
   const raw = String(invNo || '').trim()
   if (!raw) return '10000001'
+
+  // Preserve PB-YYYYMMDD-XXXXXX format as-is
+  if (/^PB-/i.test(raw)) return raw
+
+  // Preserve INV prefix format as-is
+  if (/^INV/i.test(raw)) return raw
+
+  // Pure 8-digit number
   if (/^\d{8}$/.test(raw)) return raw
 
   const matchDigits = raw.match(/\d+/g)

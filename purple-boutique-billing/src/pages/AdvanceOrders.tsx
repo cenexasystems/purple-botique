@@ -5,7 +5,7 @@ import { formatCurrency } from '../lib/retail'
 import { invoicePdfFile } from '../lib/invoicePdf'
 import { printThermalReceipt } from '../lib/thermalPrint'
 import { buildAdvanceDepositWhatsAppMessage, buildProfessionalWhatsAppMessage, publicInvoiceUrl } from '../lib/whatsappMessage'
-import { toWhatsAppUrl } from '../lib/phone'
+import { normalizePhone, toWhatsAppUrl } from '../lib/phone'
 import { advanceReceiptPdf, downloadFile, printAdvanceReceipt } from '../lib/advanceReceipt'
 import { useAdminAuthStore, useProductStore } from '../store/store'
 import {
@@ -124,6 +124,7 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
     event.preventDefault(); setSaving(true); setError(''); setNotice('')
     const total = Number(form.totalAmount); const deposit = Number(form.depositAmount)
     if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(deposit) || deposit <= 0 || deposit >= total) { setError('Deposit must be greater than RM0 and less than the total order amount.'); setSaving(false); return }
+    if (!normalizePhone(form.phone.trim())) { setError('Please enter a valid Malaysian mobile number (e.g. 0123456789 or +60 123456789).'); setSaving(false); return }
     try {
       const created = await createAdvanceOrder({ ...form, totalAmount: total, depositAmount: deposit, referenceNumber: form.reference_number, createdByName: role || 'Staff', products: [{ name: form.productName, category: form.category, description: form.description, quantity: 1, base_price: total, line_total: total, unit: 'piece', unit_type: 'unit', source: 'advance_order' }] })
       setOrders(current => [created, ...current]); setForm(initialForm); setCreateOpen(false); setNotice(`${created.deposit_id} created. Deposit is tracked separately and has not been added to revenue.`)

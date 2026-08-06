@@ -429,7 +429,7 @@ export default function Pos(props: PosProps = {}) {
   const openDepositOrder = () => {
     if (!items.length) { setError('Add at least one product before creating a deposit order.'); return }
     if (!customer.name.trim()) { setError('Enter the customer name for the deposit order.'); return }
-    if (!customer.phone.trim()) { setError('Enter the customer phone number for the deposit order.'); return }
+    if (!normalizePhone(customer.phone.trim())) { setError('Please enter a valid Malaysian mobile number (e.g. 0123456789 or +60 123456789) for the deposit order.'); return }
     if (total <= 0) { setError('The order total must be greater than zero.'); return }
     const enteredAmount = Number(cashReceived) || 0
     const suggestedDeposit = enteredAmount > 0 && enteredAmount < total ? String(enteredAmount) : ''
