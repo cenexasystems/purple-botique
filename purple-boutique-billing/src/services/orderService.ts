@@ -23,6 +23,7 @@ type CreateOrderInput = {
   splitDetails?: Record<string, unknown>
   totalGst?: number
   gstEnabled?: boolean
+  createdAt?: string
 }
 
 type CreatedOrder = {
@@ -81,6 +82,7 @@ export const createOrderWithStock = async (input: CreateOrderInput): Promise<Cre
     p_gst_enabled:            gstEnabled,
     p_payment_method:         paymentMethod,
     p_split_details:          splitDetails,
+    p_created_at:             input.createdAt || null,
   }
 
   const newRpcResult = await supabase.rpc('create_order_with_stock', rpcPayload)

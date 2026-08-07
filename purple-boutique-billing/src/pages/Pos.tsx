@@ -120,6 +120,7 @@ export default function Pos(props: PosProps = {}) {
   const [customer, setCustomer] = useState({ name: '', phone: '', address: '' })
   const [remarks, setRemarks] = useState('')
   const [referenceNumber, setReferenceNumber] = useState('')
+  const [billingDate, setBillingDate] = useState('')
   const [paymentType, setPaymentType] = useState<'cash' | 'qr' | 'card'>('cash')
   const [saving, setSaving] = useState(false)
   const [shipping, setShipping] = useState<string>('0')
@@ -360,6 +361,7 @@ export default function Pos(props: PosProps = {}) {
     setError('')
     setShipping('0')
     setRemarks('')
+    setBillingDate('')
     setReferenceNumber('')
     setBillGstEnabled(false)
     setGstInput('')
@@ -525,7 +527,8 @@ export default function Pos(props: PosProps = {}) {
         couponPercentage: appliedCoupon?.percentage,
         totalGst,
         gstEnabled: billGstEnabled,
-        paymentMethod: paymentMode
+        paymentMethod: paymentMode,
+        createdAt: billingDate ? new Date(billingDate).toISOString() : undefined,
       })
 
       // ── CRITICAL: immediately fix totals in DB, independent of PDF upload ──
@@ -542,7 +545,8 @@ export default function Pos(props: PosProps = {}) {
         manual_discount_amount: manualDiscountAmount,
         delivery_charge: Number(shipping || 0),
         remarks: remarks.trim(),
-        reference_number: referenceNumber.trim()
+        reference_number: referenceNumber.trim(),
+        ...(billingDate ? { created_at: new Date(billingDate).toISOString() } : {}),
       }).eq('id', created.orderId)
       const createdInvoice: InvoiceSnap = {
         id: created.orderId,
@@ -571,6 +575,7 @@ export default function Pos(props: PosProps = {}) {
       void persistInvoicePdf(createdInvoice)
       setItems([])
       setCustomer({ name: '', phone: '', address: '' })
+      setBillingDate('')
       void fetchProducts()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to generate bill')
@@ -869,6 +874,16 @@ export default function Pos(props: PosProps = {}) {
                   placeholder="Optional ref no."
                   className="w-full h-12 px-4 bg-white border border-[#D1FAE5]/60 rounded-xl focus:outline-none focus:border-[#047857] text-[16px] md:text-[13px] font-bold text-[#111111] placeholder:text-gray-400 placeholder:font-medium"
                 />
+              </div>
+              <div>
+                <label className="block text-[13px] md:text-[10px] font-black text-[#374151] tracking-wider uppercase mb-1.5">Billing Date <span className="normal-case font-semibold text-[#6B7280]">(Optional)</span></label>
+                <input
+                  type="date"
+                  value={billingDate}
+                  onChange={e => setBillingDate(e.target.value)}
+                  className="w-full h-12 px-4 bg-white border border-[#D1FAE5]/60 rounded-xl focus:outline-none focus:border-[#047857] text-[16px] md:text-[13px] font-bold text-[#111111] placeholder:text-gray-400 placeholder:font-medium"
+                />
+                {!billingDate && <p className="text-[10px] text-[#9CA3AF] mt-1">Leave blank to use today's date &amp; time</p>}
               </div>
             </div>
           </div>
