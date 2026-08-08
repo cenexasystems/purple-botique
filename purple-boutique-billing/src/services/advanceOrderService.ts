@@ -156,24 +156,25 @@ export async function createAdvanceOrder(input: {
   let createdOrder: AdvanceOrder | null = null
 
   if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase.rpc('create_advance_order', {
-        p_customer_name: input.customerName, p_phone: input.phone, p_address: input.address, p_product_name: input.productName,
-        p_category: input.category, p_description: input.description, p_total_amount: input.totalAmount,
-        p_deposit_amount: input.depositAmount, p_expected_delivery_date: input.expectedDeliveryDate, p_remarks: input.remarks,
-        p_payment_method: input.paymentMethod, p_created_by_name: input.createdByName, p_products: input.products || [],
-      })
-      if (error) {
-        console.error('[createAdvanceOrder] Supabase error:', error.message)
-      } else if (data) {
-        createdOrder = normalizeOrder(rpcRow(data))
-        // Patch reference_number (not in RPC params)
-        if (input.referenceNumber.trim()) {
-          await supabase.from('advance_orders').update({ reference_number: input.referenceNumber.trim() }).eq('id', createdOrder.id)
-          createdOrder.reference_number = input.referenceNumber.trim()
-        }
+    const { data, error } = await supabase.rpc('create_advance_order', {
+      p_customer_name: input.customerName, p_phone: input.phone, p_address: input.address, p_product_name: input.productName,
+      p_category: input.category, p_description: input.description, p_total_amount: input.totalAmount,
+      p_deposit_amount: input.depositAmount, p_expected_delivery_date: input.expectedDeliveryDate, p_remarks: input.remarks,
+      p_payment_method: input.paymentMethod, p_created_by_name: input.createdByName, p_products: input.products || [],
+    })
+    if (error) {
+      // Throw so the UI shows the real error — do NOT silently fall back to local storage
+      // as that creates ghost orders that can never be synced or completed.
+      throw new Error(error.message || JSON.stringify(error))
+    }
+    if (data) {
+      createdOrder = normalizeOrder(rpcRow(data))
+      // Patch reference_number (not in RPC params — added via direct update after column migration)
+      if (input.referenceNumber.trim()) {
+        await supabase.from('advance_orders').update({ reference_number: input.referenceNumber.trim() }).eq('id', createdOrder.id)
+        createdOrder.reference_number = input.referenceNumber.trim()
       }
-    } catch (err) { console.error('[createAdvanceOrder] Exception:', err) }
+    }
   }
 
   if (!createdOrder) {
