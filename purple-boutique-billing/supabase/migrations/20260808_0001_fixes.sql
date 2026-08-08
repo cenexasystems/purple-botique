@@ -38,7 +38,13 @@ END;
 $$;
 
 
--- Fix 2: Update create_advance_order to allow 0 deposit
+-- Fix 2: Update create_advance_order and table constraints to allow 0 deposit and 100% deposit
+ALTER TABLE public.advance_orders DROP CONSTRAINT IF EXISTS advance_orders_deposit_amount_check;
+ALTER TABLE public.advance_orders ADD CONSTRAINT advance_orders_deposit_amount_check CHECK (deposit_amount >= 0);
+
+ALTER TABLE public.advance_orders DROP CONSTRAINT IF EXISTS advance_deposit_less_than_total;
+ALTER TABLE public.advance_orders ADD CONSTRAINT advance_deposit_less_than_total CHECK (deposit_amount <= total_amount);
+
 CREATE OR REPLACE FUNCTION public.create_advance_order(
   p_customer_name text, p_phone text, p_address text, p_product_name text,
   p_category text, p_description text, p_total_amount numeric, p_deposit_amount numeric,
@@ -58,7 +64,7 @@ BEGIN
   if trim(coalesce(p_product_name,'')) = '' then raise exception 'Product name is required'; end if;
   if coalesce(p_total_amount,0) <= 0 then raise exception 'Total amount must be greater than zero'; end if;
   
-  -- ALOW 0 DEPOSIT HERE (changed from <= 0 to < 0)
+  -- ALOW 0 DEPOSIT AND 100% DEPOSIT HERE
   if coalesce(p_deposit_amount,0) < 0 or p_deposit_amount > p_total_amount then 
     raise exception 'Deposit cannot be negative or greater than total amount'; 
   end if;
