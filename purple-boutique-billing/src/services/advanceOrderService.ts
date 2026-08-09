@@ -119,11 +119,12 @@ export async function listAdvanceOrders(): Promise<AdvanceOrder[]> {
         console.error('[listAdvanceOrders] Supabase error:', error.message)
       } else if (Array.isArray(data)) {
         const remote = data.map(row => normalizeOrder(row as Record<string, unknown>))
-        const remoteIds = new Set(remote.map(r => r.id))
-        const localOnly = local.filter(l => !remoteIds.has(l.id))
-        const merged = [...remote, ...localOnly].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        saveLocalOrders(merged)
-        return merged
+        // When Supabase is live and returns data, return ONLY remote orders.
+        // Do NOT merge local-only orders — those are ghost orders that were never
+        // saved to Supabase and can never be completed. Merging them causes
+        // "Advance order not found" errors when the user tries to receive payment.
+        saveLocalOrders(remote)
+        return remote
       }
     } catch (err) { console.error('[listAdvanceOrders] Exception:', err) }
   }
