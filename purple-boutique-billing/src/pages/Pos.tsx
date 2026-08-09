@@ -1443,9 +1443,7 @@ export default function Pos(props: PosProps = {}) {
         />
       )}
 
-      <div className="mt-8 pb-4 text-center text-xs font-bold text-[#858C83]">
-        Powered by Cenexa Systems &copy; 2026
-      </div>
+
     </div>
   )
 }
